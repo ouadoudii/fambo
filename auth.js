@@ -39,7 +39,7 @@ export async function token(){
 }
 export async function familyRequest(method,body){
  const jwt=await token();
- const response=await fetch(`${config.url}/rest/v1/family_plans?user_id=eq.${encodeURIComponent(session.user.id)}`,{method,headers:{apikey:config.key,Authorization:`Bearer ${jwt}`,'Content-Type':'application/json',Prefer:'return=representation'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ const response=await fetch(`${config.url}/rest/v1/family_plans?user_id=eq.${encodeURIComponent(session.user.id)}`,{method,headers:{apikey:config.key,Authorization:`Bearer ${jwt}`,'Content-Type':'application/json',Prefer:method==='POST'?'resolution=merge-duplicates,return=representation':'return=representation'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
  const data=await response.json().catch(()=>[]);
  if(!response.ok)throw Error(data.message||'Familiendaten konnten nicht geladen werden');
  return data;
