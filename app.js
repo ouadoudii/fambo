@@ -1,5 +1,5 @@
 import {parseUntisUrl,mondayISO} from './lib.js';
-const INITIAL=[{name:'Sohn',url:'https://avh-gym-konstanz.webuntis.com/WebUntis?school=avh-gym-konstanz#/basic/timetablePublic/my-student?date=2026-10-19&entityId=6240'},{name:'Tochter',url:''}];
+const INITIAL=[{name:'Kind 1',url:''},{name:'Kind 2',url:''}];
 const $=id=>document.getElementById(id);
 const d=new Date(); let week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));
 let children;try{const candidate=JSON.parse(localStorage.getItem('familienwand-children'));children=Array.isArray(candidate)&&candidate.length===2?candidate:INITIAL;}catch{children=INITIAL;}

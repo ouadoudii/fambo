@@ -8,3 +8,5 @@ test('computes monday across year',()=>assert.equal(mondayISO('2027-01-01'),'202
 test('rejects invalid dates',()=>assert.throws(()=>mondayISO('2026-02-30')));
 test('maps classroom periods',()=>{const lessons=normalizeTimetable({data:{result:{data:{elementPeriods:{'6240':[{id:1,date:20261019,startTime:800,endTime:845,elements:[{type:3,name:'Mathematik'},{type:4,name:'101'}]}]}}}}});assert.equal(lessons[0].subject,'Mathematik');assert.equal(lessons[0].start,'08:00');assert.equal(lessons[0].room,'101');});
 test('rejects unexpected API shape',()=>assert.throws(()=>normalizeTimetable({data:{result:{data:{}}}})));
+
+test('public app bundle does not contain a fixed pupil identifier',async()=>{const {readFile}=await import('node:fs/promises');const app=await readFile(new URL('../app.js',import.meta.url),'utf8');assert.doesNotMatch(app,/entityId=6240|avh-gym-konstanz/);assert.match(app,/name:'Kind 1',url:''/);});
