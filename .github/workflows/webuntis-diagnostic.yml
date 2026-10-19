@@ -1,0 +1,19 @@
+name: WebUntis Connectivity Diagnostic
+on:
+  push:
+    branches:
+      - test/webuntis-connectivity-20261019
+  workflow_dispatch:
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe public WebUntis endpoints without pupil identifiers
+        run: python scripts/probe_webuntis.py
