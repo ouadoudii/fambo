@@ -1,0 +1,23 @@
+name: WebUntis Browser Investigation
+on:
+  push:
+    branches:
+      - test/webuntis-connectivity-20261019
+  workflow_dispatch:
+jobs:
+  browser-investigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real browser
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Inspect public WebUntis browser requests safely
+        run: python scripts/investigate_webuntis_browser.py
