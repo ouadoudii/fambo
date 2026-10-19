@@ -1,0 +1,13 @@
+name: Fambo Production Smoke
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 7 * * *"
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check production signup, configuration and private API
+        run: python tests/production_smoke.py
