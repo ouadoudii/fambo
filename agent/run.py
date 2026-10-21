@@ -5,10 +5,10 @@ A local browser profile stays on this computer. Only normalized lesson data is e
 This proof-of-concept does NOT yet synchronize with the hosted Fambo web app.
 """
 import json, os, sys
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-from timetable import extract_lessons
+from timetable import extract_lessons, is_school_timetable_response
 
 ROOT=Path.home()/'.fambo-webuntis'
 PROFILE=ROOT/'browser-profile'
@@ -23,8 +23,7 @@ def main():
   page=context.pages[0] if context.pages else context.new_page()
   seen=[]
   def on_response(response):
-   if 'webuntis.com' not in response.url or not any(x in response.url.lower() for x in ('timetable','weekly','period')):return
-   if 'json' not in (response.headers.get('content-type') or '').lower():return
+   if not is_school_timetable_response(response.url,response.headers.get('content-type')):return
    try:
     payload=response.json()
     found=extract_lessons(payload)
@@ -45,7 +44,7 @@ def main():
    print('WebUntis verwendet möglicherweise ein anderes Antwortformat.')
    context.close()
    return 2
-  data={'format':'fambo-lessons-v1','exportedAt':datetime.utcnow().isoformat()+'Z','lessons':lessons}
+  data={'format':'fambo-lessons-v1','exportedAt':datetime.now(timezone.utc).isoformat(),'lessons':lessons}
   temporary=OUTPUT.with_suffix('.tmp')
   temporary.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
   try:temporary.chmod(0o600)
