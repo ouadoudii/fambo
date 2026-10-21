@@ -20,4 +20,12 @@ class Production(unittest.TestCase):
   self.assertIn('localStorage',script)
   self.assertIn('/api/connect',script)
   self.assertNotIn("from './auth.js'",script)
+ def test_browserbase_server_connection(self):
+  # Production-only credentials; must be a read-only probe without browser creation.
+  import json
+  from urllib.error import HTTPError
+  with urlopen(BASE+'/api/browserbase-health',timeout=20) as response:
+   self.assertEqual(response.status,200)
+   data=json.loads(response.read().decode('utf8'))
+  self.assertEqual(data,{'available':True})
 if __name__=='__main__':unittest.main()
