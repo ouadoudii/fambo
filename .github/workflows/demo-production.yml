@@ -1,6 +1,8 @@
 name: Fambo Demo Live Verification
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 jobs:
   live-demo:
     runs-on: ubuntu-latest
