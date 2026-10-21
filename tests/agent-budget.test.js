@@ -41,3 +41,24 @@ test('start API is fail closed for wrong origin, unknown host and disabled mode'
   else process.env.FAMBO_AGENT_LAUNCH_ENABLED=backup.FAMBO_AGENT_LAUNCH_ENABLED;
  }
 });
+
+test('Vercel Marketplace KV_REST_API_* credentials work without custom UPSTASH names',async()=>{
+ const marketplace={KV_REST_API_URL:'https://example.upstash.io',KV_REST_API_TOKEN:'marketplace-test-token'};
+ let requests=0;
+ const ok=await reserveBrowserBudget({deviceId:dev,env:marketplace,fetcher:async(url,options)=>{
+  requests++;
+  assert.equal(url,'https://example.upstash.io/');
+  assert.equal(options.headers.Authorization,'Bearer marketplace-test-token');
+  const args=JSON.parse(options.body);
+  assert.match(args[1],/if not redis.call\\('SET',active,'1','EX',lock,'NX'\\) then return 0 end/);
+  return new Response(JSON.stringify({result:1}));
+ }});
+ assert.equal(ok,true);assert.equal(requests,1);
+});
+test('partial marketplace credentials do not fall back to mismatched legacy tokens',async()=>{
+ const mixed={KV_REST_API_URL:'https://example.upstash.io',UPSTASH_REDIS_REST_TOKEN:'legacy-token-long-enough'};
+ // Never combine a new provider URL with unrelated legacy credentials.
+ let calls=0;
+ assert.equal(await reserveBrowserBudget({deviceId:dev,env:mixed,fetcher:async()=>{calls++;return new Response(JSON.stringify({result:1}))}}),false);
+ assert.equal(calls,0);
+});
