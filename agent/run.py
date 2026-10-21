@@ -8,7 +8,7 @@ import json, os, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-from timetable import extract_lessons, is_school_timetable_response
+from capture import lessons_from_response
 
 ROOT=Path.home()/'.fambo-webuntis'
 PROFILE=ROOT/'browser-profile'
@@ -23,10 +23,10 @@ def main():
   page=context.pages[0] if context.pages else context.new_page()
   seen=[]
   def on_response(response):
-   if not is_school_timetable_response(response.url,response.headers.get('content-type')):return
+   if not response.url.startswith('https://'):return
    try:
     payload=response.json()
-    found=extract_lessons(payload)
+    found=lessons_from_response(response.url,response.headers.get('content-type'),payload)
     if found:seen.extend(found)
    except (ValueError,TypeError,KeyError,RuntimeError):pass
   page.on('response',on_response)
