@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node dev-server.js",
     "test": "node --test tests/*.test.js",
-    "typecheck": "node --check app.js && node --check auth.js && node --check api/config.js && node --check api/timetable.js && node --check lib.js",
+    "typecheck": "node --check app.js && node --check auth.js && node --check api/config.js && node --check api/timetable.js && node --check lib.js && node --check demo.js",
     "lint": "node --check app.js && node --check auth.js && node --check api/config.js && node --check api/timetable.js && node --check lib.js",
     "build": "node scripts/build.js",
     "audit": "npm audit --omit=dev --audit-level=high"
