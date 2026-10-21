@@ -7,7 +7,7 @@ const oldUrl=process.env.SUPABASE_URL,oldKey=process.env.SUPABASE_ANON_KEY;
 process.env.SUPABASE_URL='https://example.supabase.co';
 process.env.SUPABASE_ANON_KEY='public-anon-key';
 function response(){return {statusCode:200,headers:{},setHeader(k,v){this.headers[k]=v;return this},status(n){this.statusCode=n;return this},json(body){this.body=body;return this}}}
-const valid={method:'GET',headers:{authorization:'Bearer my.jwt.token'},query:{slot:'0',date:'2026-10-19'}};
+const valid={method:'GET',headers:{authorization:'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYWFhYWFhYS1hYWFhLWFhYWEtYWFhYS1hYWFhYWFhYWFhYWEifQ.c2ln'},query:{slot:'0',date:'2026-10-19'}};
 test('calendar rejects anonymous requests before network call',async()=>{global.fetch=()=>{throw Error('should not fetch')};const res=response();await handler({...valid,headers:{}},res);assert.equal(res.statusCode,401);global.fetch=ORIGINAL});
 test('calendar rejects untrusted direct URL parameter without valid slot',async()=>{global.fetch=()=>{throw Error('should not fetch')};const res=response();await handler({...valid,query:{url:'https://attacker.com',date:'2026-10-19'}},res);assert.equal(res.statusCode,400);global.fetch=ORIGINAL});
 test('calendar accesses only logged-in user row',async()=>{
@@ -21,6 +21,7 @@ test('calendar accesses only logged-in user row',async()=>{
  try{const res=response();await handler(valid,res);assert.equal(res.statusCode,200);assert.equal(res.headers['Cache-Control'],'private, no-store');assert.ok(visited.some(u=>u.includes('user_id=eq.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')));assert.ok(visited.every(u=>!u.includes('attacker.com')))}
  finally{global.fetch=ORIGINAL}
 });
+test('malformed JWT is rejected with 401 before contacting Supabase',async()=>{let calls=0;global.fetch=async()=>{calls++;throw Error('unexpected')};try{const res=response();await handler({...valid,headers:{authorization:'Bearer invalid.jwt.token'}},res);assert.equal(res.statusCode,401);assert.equal(calls,0)}finally{global.fetch=ORIGINAL}});
 test('invalid JWT does not access family data',async()=>{let calls=0;global.fetch=async()=>{calls++;return new Response('{}',{status:401})};try{const res=response();await handler(valid,res);assert.equal(res.statusCode,401);assert.equal(calls,1)}finally{global.fetch=ORIGINAL}});
 test('config returns only public config, never service role key',()=>{const res=response();configHandler({method:'GET'},res);assert.equal(res.statusCode,200);assert.deepEqual(Object.keys(res.body).sort(),['key','url'])});
 test('SQL enables RLS and scopes all actions to authenticated user',async()=>{const fs=await import('node:fs/promises');const sql=await fs.readFile(new URL('../supabase/migrations/20261019_family_plans.sql',import.meta.url),'utf8');assert.match(sql,/enable row level security/);for(const k of ['select','insert','update','delete'])assert.match(sql,new RegExp('for '+k+' to authenticated'));assert.match(sql,/auth\.uid\(\)/);assert.match(sql,/revoke all on public\.family_plans from anon/)});

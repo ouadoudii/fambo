@@ -9,6 +9,13 @@ export default async function handler(req,res) {
  const bearer=String(req.headers?.authorization||'');
  if(!/^Bearer [A-Za-z0-9._~-]+$/.test(bearer))return res.status(401).json({error:'Bitte anmelden'});
  const jwt=bearer.slice(7);
+ const pieces=jwt.split('.');
+ try {
+  if(pieces.length!==3||pieces.some(part=>!part))throw Error('Invalid JWT');
+  const header=JSON.parse(Buffer.from(pieces[0],'base64url').toString('utf8'));
+  const claims=JSON.parse(Buffer.from(pieces[1],'base64url').toString('utf8'));
+  if(!header||typeof header.alg!=='string'||!claims||!(/^[0-9a-f-]{36}$/i).test(claims.sub||''))throw Error('Invalid JWT');
+ }catch{return res.status(401).json({error:'Ungültige Sitzung'})}
  let day,slot;try{day=mondayISO(String(req.query?.date||''));slot=Number(req.query?.slot);if(!Number.isInteger(slot)||slot<0||slot>1)throw Error('Ungültiger Stundenplan')}catch{return res.status(400).json({error:'Ungültige Anfrage'})}
  try{
   const auth=await fetch(`${base}/auth/v1/user`,{headers:{apikey:key,Authorization:`Bearer ${jwt}`},signal:AbortSignal.timeout(6000)});
