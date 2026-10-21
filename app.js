@@ -23,8 +23,10 @@ const form=$('settings-form');function fill(){children.forEach((c,i)=>{form.elem
 form.addEventListener('submit',async event=>{if(event.submitter?.value!=='save')return;event.preventDefault();const next=[0,1].map(i=>({name:form.elements[`name${i}`].value.trim(),url:form.elements[`url${i}`].value.trim()}));try{next.forEach(c=>{if(!c.name)throw Error('Bitte beide Namen eintragen.');if(c.url)parseUntisUrl(c.url)});await saveFamily(next);children=next;$('form-error').textContent='';$('settings-dialog').close();render();}catch(e){$('form-error').textContent=e.message;}});
 let registration=false;
 function showAuth(message=''){demoMode=false;$('demo-banner').hidden=true;$('settings').hidden=false;$('auth-view').hidden=false;$('dashboard').hidden=true;$('auth-error').textContent=message;}
-async function showDashboard() {if(demoMode)return;children=await loadFamily();fill();$('auth-view').hidden=true;$('dashboard').hidden=false;await render();}
-$('demo-start').addEventListener('click',()=>{demoMode=true;children=DEMO_CHILDREN.map(child=>({...child}));fill();$('demo-banner').hidden=false;$('settings').hidden=true;$('auth-view').hidden=true;$('dashboard').hidden=false;render();});
+async function showDashboard() {demoMode=false;$('demo-banner').hidden=true;$('settings').hidden=false;children=await loadFamily();fill();$('auth-view').hidden=true;$('dashboard').hidden=false;await render();}
+function startDemo(){demoMode=true;children=DEMO_CHILDREN.map(child=>({...child}));fill();$('demo-banner').hidden=false;$('settings').hidden=true;$('auth-view').hidden=true;$('dashboard').hidden=false;render();}
+$('demo-start').addEventListener('click',startDemo);
+$('private-login').addEventListener('click',()=>showAuth());
 $('auth-toggle').addEventListener('click',()=>{registration=!registration;$('auth-submit').textContent=registration?'Registrieren':'Anmelden';$('auth-toggle').textContent=registration?'Bereits registriert? Anmelden':'Noch kein Konto? Registrieren';$('auth-error').textContent='';});
 $('auth-form').addEventListener('submit',async event=>{
  event.preventDefault();
@@ -38,7 +40,8 @@ $('auth-form').addEventListener('submit',async event=>{
  }catch(e){$('auth-error').textContent=e.message;}
  finally{submit.disabled=false}
 });
-$('logout').addEventListener('click',async()=>{if(demoMode){children=INITIAL;showAuth();return;}try{await signOut()}finally{children=INITIAL;showAuth();}});
-showAuth();
-initAuth().then(async user=>{if(user)await showDashboard()}).catch(e=>showAuth(e.message));
+$('logout').addEventListener('click',async()=>{if(demoMode){startDemo();return;}try{await signOut()}finally{children=INITIAL;startDemo();}});
+startDemo();
+// Public visitors see only fictional data. Existing authenticated families remain private.
+initAuth().then(async user=>{if(user)await showDashboard()}).catch(()=>startDemo());
 setInterval(()=>{(demoMode||currentUser())&&!$('settings-dialog').open&&render()},300000);
