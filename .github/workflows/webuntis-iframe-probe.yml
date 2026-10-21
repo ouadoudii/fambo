@@ -1,0 +1,14 @@
+name: WebUntis Public iFrame Probe
+on:
+  push:
+    branches: [feature/webuntis-portal-entry]
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install playwright
+      - run: python -m playwright install --with-deps chromium
+      - run: python scripts/probe_webuntis_iframe.py

@@ -18,7 +18,17 @@
 <dialog id="connection-dialog" aria-labelledby="dialog-title">
 <form id="connection-form">
 <div class="dialog-head"><h2 id="dialog-title">WebUntis verbinden</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
-<p class="hint">Kopiere den öffentlichen Stundenplan-Link aus WebUntis. Dein Link wird nur in diesem Browser gespeichert.</p>
+<p class="hint">Öffne die originale WebUntis-Seite, um dich bei deiner Schule anzumelden. Fambo erhält dabei weder dein Passwort noch deine Sitzung.</p>
+<div class="portal-tools">
+  <button id="webuntis-show" type="button" class="portal-button">WebUntis-Seite anzeigen <span aria-hidden="true">↗</span></button>
+  <a id="webuntis-external" href="https://webuntis.com/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Direkt bei WebUntis öffnen</a>
+</div>
+<section id="webuntis-panel" class="webuntis-panel" hidden aria-label="WebUntis Originalseite">
+  <p class="portal-notice">Dies ist die originale WebUntis-Seite. Falls sie hier nicht angezeigt wird, nutze „Direkt bei WebUntis öffnen“.</p>
+  <iframe id="webuntis-frame" title="WebUntis – Schulauswahl und Anmeldung" referrerpolicy="no-referrer" sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy"></iframe>
+</section>
+<div class="portal-separator"><span>Öffentlichen Stundenplan übernehmen</span></div>
+<p class="hint">Falls deine Schule einen öffentlichen Stundenplan-Link freigibt, kannst du ihn hier eintragen. Eine WebUntis-Anmeldung allein verbindet Fambo noch nicht automatisch.</p>
 <label>Anzeige-Name<input id="child-name" name="name" maxlength="30" required placeholder="z. B. Mein Kind" autocomplete="off"></label>
 <label>Öffentlicher WebUntis-Link<input id="child-url" name="url" type="url" required placeholder="https://schule.webuntis.com/WebUntis?school=…" autocomplete="off"></label>
 <p id="form-error" class="error" role="alert"></p>
