@@ -83,4 +83,61 @@ class ConnectFlows(unittest.TestCase):
   page.get_by_text('Nur sichere WebUntis-Links sind erlaubt.').wait_for()
   self.assertEqual(page.get_by_role('button',name='WebUntis verbinden').count(),2)
   page.close()
+ def test_private_browser_connect_mobile_and_desktop(self):
+  for width,height in [(1440,900),(390,844)]:
+   with self.subTest(width=width):
+    context=self.browser.new_context(viewport={'width':width,'height':height})
+    page=context.new_page()
+    calls=[]
+    def route(r):
+     u=r.request.url
+     if u.endswith('/api/agent/status'):
+      return r.fulfill(status=200,content_type='application/json',body='{"available":true}')
+     if u.endswith('/api/agent/start'):
+      calls.append('start')
+      return r.fulfill(status=201,content_type='application/json',body='{"status":"created"}')
+     if u.endswith('/api/agent/session'):
+      if r.request.method=='DELETE':
+       calls.append('stop')
+       return r.fulfill(status=200,content_type='application/json',body='{"closed":true}')
+      calls.append('view')
+      return r.fulfill(status=200,content_type='application/json',body='{"viewer":"https://www.browserbase.com/debug/secure-session","expiresAt":9999999999}')
+     if u.startswith('https://family.test'):
+      name=u.split('?')[0].split('/')[-1] or 'index.html'
+      if name in ('index.html','app.js','styles.css','lib.js'):
+       mime={'html':'text/html','js':'text/javascript','css':'text/css'}[name.split('.')[-1]]
+       return r.fulfill(status=200,content_type=mime,body=(ROOT/name).read_bytes())
+     return r.abort()
+    page.route('**/*',route);page.goto('https://family.test/')
+    page.get_by_role('button',name='WebUntis verbinden').first.click()
+    start=page.get_by_role('button',name='Geschützten Browser öffnen')
+    start.wait_for(state='visible')
+    page.get_by_text('Bereit für eine geschützte Browser-Sitzung.').wait_for()
+    self.assertTrue(start.is_enabled())
+    start.click()
+    page.locator('#cloud-viewer:not([hidden])').wait_for()
+    self.assertEqual(page.locator('#cloud-viewer').get_attribute('href'),'https://www.browserbase.com/debug/secure-session')
+    self.assertEqual(page.locator('#cloud-viewer').get_attribute('referrerpolicy'),'no-referrer')
+    self.assertEqual(calls,['start','view'])
+    page.get_by_role('button',name='Browser-Sitzung beenden').click()
+    page.locator('#cloud-stop').wait_for(state='hidden')
+    self.assertIn('stop',calls)
+    self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
+    context.close()
+ def test_cloud_browser_not_available_without_server_approval(self):
+  page=self.browser.new_page()
+  def route(r):
+   u=r.request.url
+   if u.endswith('/api/agent/status'):return r.fulfill(status=200,content_type='application/json',body='{"available":false}')
+   if u.startswith('https://family.test'):
+    name=u.split('?')[0].split('/')[-1] or 'index.html'
+    if name in ('index.html','app.js','styles.css','lib.js'):
+     mime={'html':'text/html','js':'text/javascript','css':'text/css'}[name.split('.')[-1]]
+     return r.fulfill(status=200,content_type=mime,body=(ROOT/name).read_bytes())
+   return r.abort()
+  page.route('**/*',route);page.goto('https://family.test/')
+  page.get_by_role('button',name='WebUntis verbinden').first.click()
+  page.get_by_text('Cloud-Browser momentan noch nicht verfügbar.').wait_for()
+  self.assertFalse(page.get_by_role('button',name='Geschützten Browser öffnen').is_enabled())
+  page.close()
 if __name__=='__main__':unittest.main()

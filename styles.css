@@ -31,3 +31,12 @@ dialog{max-height:90vh;overflow:auto}
 
 .portal-link{display:flex!important;align-items:center;justify-content:center;text-decoration:none;border-radius:12px;min-height:48px;padding:12px 18px;text-align:center}
 .portal-link:hover{background:#dcebdd}
+
+.cloud-entry{border:1px solid #dbe7da;background:#f4f8f2;border-radius:15px;padding:15px;margin:17px 0}
+.cloud-entry h3{font-size:17px;margin:0 0 8px;letter-spacing:-.02em}
+.cloud-entry .hint{margin:8px 0 12px}
+.cloud-entry .primary{margin:8px 0;width:100%}
+.cloud-entry .primary:disabled{opacity:.58;cursor:not-allowed}
+.cloud-entry a:not([hidden]){display:inline-flex;align-items:center;min-height:44px;padding:10px;color:#2d6943;font-weight:650}
+.cloud-entry button:not(.primary){margin-top:8px}
+.cloud-warning{font-size:12px!important;line-height:1.45!important;color:#756d5f!important}

@@ -19,6 +19,15 @@
 <form id="connection-form">
 <div class="dialog-head"><h2 id="dialog-title">WebUntis verbinden</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
 <p class="hint">WebUntis benötigt die Anmeldung auf der Seite deiner Schule. Öffne die offizielle Schulsuche in einem neuen Tab und melde dich dort an. Das Passwort bleibt bei WebUntis.</p>
+<section class="cloud-entry" aria-label="Geschützter WebUntis-Browser">
+  <h3>Privaten Stundenplan verbinden</h3>
+  <p class="hint">Melde dich im geschützten Cloud-Browser direkt bei WebUntis an. Dein Passwort gehört nicht in Fambo.</p>
+  <div id="cloud-status" class="hint" role="status" aria-live="polite">Verbindung wird geprüft …</div>
+  <button id="cloud-start" class="primary" type="button" disabled>Geschützten Browser öffnen</button>
+  <a id="cloud-viewer" href="#" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer" hidden>Browser anzeigen ↗</a>
+  <button id="cloud-stop" type="button" hidden>Browser-Sitzung beenden</button>
+  <p class="hint cloud-warning">Die Anmeldung im Cloud-Browser allein übernimmt noch keine Stundenplandaten. Die automatische Übernahme wird erst nach einem echten WebUntis-Test freigegeben.</p>
+</section>
 <div class="portal-tools">
   <a id="webuntis-external" class="portal-button portal-link" href="https://school.webuntis.com/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Schule bei WebUntis auswählen ↗</a>
 </div>
