@@ -25,7 +25,7 @@ class ConnectFlows(unittest.TestCase):
       return r.fulfill(status=200,content_type='application/json',body=json.dumps({'lessons':[{'id':'1','date':'2026-10-19','subject':'Mathematik','start':'08:00','end':'08:45','room':'101','cancelled':False}]}))
      if url.startswith('https://family.test'):
       name=url.split('?')[0].split('/')[-1] or 'index.html'
-      if name in ('index.html','app.js','styles.css','lib.js'):
+      if name in ('index.html','app.js','styles.css','lib.js','ical.js'):
        mime={'html':'text/html','js':'text/javascript','css':'text/css'}[name.split('.')[-1]]
        return r.fulfill(status=200,content_type=mime,body=(ROOT/name).read_bytes())
      if url.startswith('https://school.webuntis.com/'):
