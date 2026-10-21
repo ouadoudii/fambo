@@ -19,5 +19,6 @@ class Production(unittest.TestCase):
    self.assertEqual(response.status,200);script=response.read().decode('utf8')
   self.assertIn('localStorage',script)
   self.assertIn('/api/connect',script)
+  self.assertIn('/api/ical',script)
   self.assertNotIn("from './auth.js'",script)
 if __name__=='__main__':unittest.main()
