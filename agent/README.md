@@ -19,3 +19,13 @@ Der Test ist bewusst nicht unbeaufsichtigt und übernimmt keine Captchas/2FA aut
 ## GitHub Actions
 
 Der Chromium-Test `tests/agent_browser_test.py` simuliert die Netzwerkantwort einer WebUntis-Stundenplanseite und prüft, dass ausschließlich Unterrichtsinformationen extrahiert werden. Dieser Test benötigt **kein WebUntis-Konto, kein Passwort und keine Sitzungs-Cookies**. Er prüft **nicht**, ob eine echte Anmeldung in GitHub Actions möglich ist. Eine zeitgesteuerte Produktion-Synchronisation ist noch nicht eingerichtet.
+
+## Browserbase-Anbindung (vorbereitet)
+
+`agent/browserbase.js` kapselt die offizielle Browserbase-Sessions-API serverseitig: Sitzung anlegen, geschützten Browser-Viewer abrufen, Sitzung beenden. `tests/browserbase.test.js` simuliert die API und prüft, dass keine API-Schlüssel oder Verbindungs-Tokens in eine öffentliche Antwort gelangen.
+
+In Vercel werden später **BROWSERBASE_API_KEY** und **BROWSERBASE_PROJECT_ID** als **sensitive bzw. encrypted Environment Variables** benötigt. Secrets gehören weder in Dateien noch in GitHub. Kein Benutzer muss Zugangsdaten im Chat veröffentlichen.
+
+**Nicht für Produktion freigegeben:** Es existiert bewusst noch kein öffentlich erreichbarer Sitzungs-Start-Endpunkt. Dieser muss zuerst über eine private, gerätegebundene Berechtigung sowie harte Rate Limits und Sitzungslimits abgesichert werden. Auch der Browser-Viewer ist eine sensitive Berechtigung und darf nicht anderen Besuchern angezeigt werden. Nach Ablauf ist die Sitzung aktiv zu schließen.
+
+Browserbase kann technisch Zugriff auf die dort ausgeführte authentifizierte WebUntis-Browsersitzung erhalten; die Anmeldung beim WebUntis-Original erfolgt manuell. Relevante Datenschutzregeln und WebUntis-Nutzungsbedingungen müssen berücksichtigt werden.
