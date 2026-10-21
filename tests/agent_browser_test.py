@@ -17,8 +17,7 @@ class BrowserAgentProbe(unittest.TestCase):
     page=browser.new_page()
     observed=[]
     page.on('response',lambda response: observed.extend(lessons_from_response(response.url,response.headers.get('content-type',''),response.json())) if response.url==ENDPOINT else None)
-    page.route(ENDPOINT,lambda route:route.fulfill(status=200,content_type='application/json',json=DUMMY))
-    page.route('**/*',lambda route:route.fulfill(status=200,content_type='text/html',body='<html><body>Stundenplan</body></html>') if route.request.url==SCHOOL+'/' else route.continue_())
+    page.route('**/*',lambda route: route.fulfill(status=200,content_type='application/json',json=DUMMY) if route.request.url==ENDPOINT else (route.fulfill(status=200,content_type='text/html',body='<html><body>Stundenplan</body></html>') if route.request.url==SCHOOL+'/' else route.abort()))
     page.goto(SCHOOL+'/')
     page.evaluate("""async (url) => { const r=await fetch(url); await r.json(); }""",ENDPOINT)
     self.assertEqual(len(observed),1)
