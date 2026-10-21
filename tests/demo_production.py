@@ -7,7 +7,8 @@ class Production(unittest.TestCase):
   with urlopen(BASE+'/',timeout=20) as response:
    self.assertEqual(response.status,200);html=response.read().decode('utf8')
   self.assertIn('id="connection-form"',html)
-  self.assertIn('id="webuntis-frame"',html)
+  self.assertNotIn('<iframe',html)
+  self.assertIn('https://school.webuntis.com/',html)
   self.assertIn('id="webuntis-external"',html)
   self.assertIn('id="schedules"',html)
   self.assertNotIn('Alex',html)
