@@ -1,21 +1,26 @@
-"""Verify that the one-click demo is present on the deployed Fambo page."""
-import os
-import unittest
+"""Verify no login UI is present on deployed public Fambo wall."""
+import os,unittest
 from urllib.request import urlopen
-
 BASE=os.environ.get('FAMBO_BASE_URL','https://fambo.vercel.app').rstrip('/')
-class DemoProduction(unittest.TestCase):
- def test_demo_button_on_live_login(self):
-  with urlopen(BASE+'/',timeout=20) as response:
-   self.assertEqual(response.status,200)
-   html=response.read().decode('utf-8')
-  self.assertIn('id="demo-start"',html)
-  self.assertIn('Demo ohne Anmeldung ausprobieren',html)
+class PublicProduction(unittest.TestCase):
+ def test_live_wall_has_no_login(self):
+  with urlopen(BASE+'/',timeout=20) as resp:
+   self.assertEqual(resp.status,200)
+   html=resp.read().decode('utf-8')
+  self.assertIn('id="dashboard"',html)
   self.assertIn('id="demo-banner"',html)
- def test_demo_script_available(self):
-  with urlopen(BASE+'/demo.js',timeout=20) as response:
-   self.assertEqual(response.status,200)
-   script=response.read().decode('utf-8')
+  for forbidden in ('id="auth-form"','id="private-login"','id="auth-email"','id="logout"','id="demo-start"'):
+   self.assertNotIn(forbidden,html)
+ def test_local_demo_is_deployed(self):
+  with urlopen(BASE+'/demo.js',timeout=20) as resp:
+   self.assertEqual(resp.status,200)
+   script=resp.read().decode('utf-8')
   self.assertIn('DEMO_CHILDREN',script)
   self.assertNotIn('supabase.co',script.lower())
+ def test_no_auth_module_in_public_app(self):
+  with urlopen(BASE+'/app.js',timeout=20) as resp:
+   self.assertEqual(resp.status,200)
+   script=resp.read().decode('utf-8')
+  self.assertNotIn("from './auth.js'",script)
+  self.assertNotIn('initAuth()',script)
 if __name__=='__main__':unittest.main()
