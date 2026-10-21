@@ -15,11 +15,13 @@ class BrowserAgentProbe(unittest.TestCase):
    browser=p.chromium.launch(headless=True,args=['--no-sandbox'])
    try:
     page=browser.new_page()
-    observed=[]
-    page.on('response',lambda response: observed.extend(lessons_from_response(response.url,response.headers.get('content-type',''),response.json())) if response.url==ENDPOINT else None)
+
     page.route('**/*',lambda route: route.fulfill(status=200,content_type='application/json',json=DUMMY) if route.request.url==ENDPOINT else (route.fulfill(status=200,content_type='text/html',body='<html><body>Stundenplan</body></html>') if route.request.url==SCHOOL+'/' else route.abort()))
     page.goto(SCHOOL+'/')
-    page.evaluate("""async (url) => { const r=await fetch(url); await r.json(); }""",ENDPOINT)
+    with page.expect_response(lambda response: response.url==ENDPOINT) as received:
+     page.evaluate("""async (url) => { const r=await fetch(url); await r.json(); }""",ENDPOINT)
+    response=received.value
+    observed=lessons_from_response(response.url,response.headers.get('content-type',''),response.json())
     self.assertEqual(len(observed),1)
     self.assertEqual(observed[0]['subject'],'Mathe')
     self.assertEqual(observed[0]['room'],'101')
