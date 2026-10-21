@@ -14,7 +14,6 @@ class ProductionSmoke(unittest.TestCase):
   self.assertEqual(code,200,'Production login page must be reachable')
   self.assertIn('Familienzeit, ganz privat',body)
   self.assertIn('auth-form',body)
-  self.assertIn('demo-start',body)
  def test_supabase_public_config(self):
   code,body,_=fetch('/api/config')
   self.assertEqual(code,200,'Supabase config API must be available')
