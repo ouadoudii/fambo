@@ -13,6 +13,37 @@ class AuthFlows(unittest.TestCase):
  def tearDownClass(cls):
   cls.browser.close()
   cls.pw.stop()
+ def test_demo_is_isolated_and_mobile_responsive(self):
+  for width,height in [(1440,900),(1024,600),(390,844)]:
+   with self.subTest(width=width):
+    page=self.browser.new_page(viewport={'width':width,'height':height})
+    calls=[]
+    def route(request):
+     url=request.request.url
+     if url.startswith('https://family.test'):
+      path=url.split('?')[0].split('/')[-1] or 'index.html'
+      if path in ('index.html','app.js','auth.js','lib.js','demo.js','styles.css'):
+       mime={'html':'text/html','js':'text/javascript','css':'text/css'}[path.split('.')[-1]]
+       return request.fulfill(status=200,content_type=mime,body=(ROOT/path).read_bytes())
+     calls.append(url)
+     return request.abort()
+    page.route('**/*',route)
+    page.goto('https://family.test/')
+    page.get_by_role('button',name='Demo ohne Anmeldung ausprobieren').click()
+    page.get_by_text('DEMO · Beispieldaten').wait_for()
+    page.get_by_role('heading',name='Alex').wait_for()
+    page.get_by_role('heading',name='Mila').wait_for()
+    self.assertTrue(page.get_by_text('Mathematik').first.is_visible())
+    self.assertFalse(page.locator('#settings').is_visible())
+    self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
+    page.get_by_role('button',name='Nächste Woche').click()
+    page.get_by_role('heading',name='Mila').wait_for()
+    self.assertFalse(any('/api/timetable' in url or '/rest/v1/family_plans' in url for url in calls))
+    page.get_by_role('button',name='Abmelden').click()
+    page.get_by_role('button',name='Anmelden',exact=True).wait_for()
+    self.assertFalse(page.locator('#dashboard').is_visible())
+    page.close()
+
  def test_register_login_save_reload_logout_and_private_access(self):
   for width,height in [(1440,900),(1024,600),(390,844)]:
    with self.subTest(width=width):
@@ -41,7 +72,7 @@ class AuthFlows(unittest.TestCase):
       return json_response(route,{'lessons':[{'id':'a','date':'2026-10-19','start':'08:00','end':'08:45','subject':'Mathematik','room':'101','cancelled':False}]})
      if url.startswith('https://family.test'):
       path=url.split('?')[0].split('/')[-1] or 'index.html'
-      if path in ('index.html','app.js','auth.js','lib.js','styles.css'):
+      if path in ('index.html','app.js','auth.js','lib.js','demo.js','styles.css'):
        mime={'html':'text/html','js':'text/javascript','css':'text/css'}[path.split('.')[-1]]
        return route.fulfill(status=200,content_type=mime,body=(ROOT/path).read_bytes())
      return route.abort()
