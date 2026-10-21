@@ -3,7 +3,17 @@
 The agent does not capture network request headers, cookies, tokens, or raw payloads.
 """
 from datetime import datetime
+from urllib.parse import urlparse
 import re
+
+def is_school_timetable_response(url, content_type):
+ try:
+  parsed=urlparse(url)
+  return (parsed.scheme=='https' and parsed.hostname is not None and
+   parsed.hostname.endswith('.webuntis.com') and
+   any(marker in parsed.path.lower() for marker in ('timetable','weekly','period')) and
+   'json' in (content_type or '').lower())
+ except (ValueError,TypeError):return False
 def _str(x):
  return x.strip() if isinstance(x,str) else ''
 def _clock(value):
