@@ -120,7 +120,7 @@ class ConnectFlows(unittest.TestCase):
     self.assertEqual(page.locator('#cloud-viewer').get_attribute('referrerpolicy'),'no-referrer')
     self.assertEqual(calls,['start','view'])
     page.get_by_role('button',name='Browser-Sitzung beenden').click()
-    page.locator('#cloud-stop[hidden]').wait_for()
+    page.locator('#cloud-stop').wait_for(state='hidden')
     self.assertIn('stop',calls)
     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
     context.close()
