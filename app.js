@@ -77,6 +77,7 @@ $('cloud-start').onclick=async()=>{
   $('cloud-stop').hidden=true;
   cloudUrl='';
   await refreshCloud();
+  cloudMessage('Der Browser konnte nicht gestartet werden. Bitte später erneut versuchen.');
  }
 };
 $('cloud-stop').onclick=async()=>{
