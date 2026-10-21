@@ -12,10 +12,10 @@ Die Fambo-Web-App braucht weder ChatGPT Work noch ein Fambo-Benutzerkonto. Für 
 
 ## Bis zur vollständigen Freigabe deaktiviert
 
-Derzeit fehlen Upstash-Redis-Zugangsdaten sowie die erforderlichen Vercel-Variablen `FAMBO_AGENT_LAUNCH_ENABLED`, `FAMBO_AGENT_RATE_LIMIT_READY` und `FAMBO_AGENT_SIGNING_KEY`. **Diese Flags dürfen nicht aktiviert werden, bevor das Redis-Konto inklusive Kosten-/Budgetgrenzen eingerichtet und die echte WebUntis-Sitzung kontrolliert getestet ist.**
+Die Upstash-Redis-Zugangsdaten sind über den Vercel Marketplace als `KV_REST_API_URL` und `KV_REST_API_TOKEN` hinterlegt. Es fehlen weiterhin die Freigaben `FAMBO_AGENT_LAUNCH_ENABLED`, `FAMBO_AGENT_RATE_LIMIT_READY` und `FAMBO_AGENT_SIGNING_KEY`. **Diese Flags dürfen nicht aktiviert werden, bevor das Redis-Konto inklusive Kosten-/Budgetgrenzen eingerichtet und die echte WebUntis-Sitzung kontrolliert getestet ist.**
 
 Die öffentliche Fambo-Oberfläche bietet deshalb noch keinen Browserstart an. Ein öffentliches Browserstart-API ohne atomare Beschränkung würde die kostenlosen Browserbase-Minuten verbrauchen und missbraucht werden können. Keine Secrets in GitHub oder im Chat übermitteln. Browserbase verarbeitet technisch die angemeldete Sitzung; WebUntis-Captcha oder Zwei-Faktor-Anmeldung nicht umgehen.
 
 ## Nächster Test
 
-Einen geschützten Redis-Dienst bereitstellen und `UPSTASH_REDIS_REST_URL` sowie `UPSTASH_REDIS_REST_TOKEN` als Vercel Sensitive Environment Variables hinterlegen. Anschließend atomare Reservierung gegen echte Redis-Testumgebung, parallele Requests, Browsersitzung und Viewer im Browser testen; danach UI aktivieren und verifizieren, dass der WebUntis-Stundenplan wirklich lesbar ist.
+Den über Vercel Marketplace verbundenen Redis-Dienst mit einer **nicht-schreibenden** Authentifizierungsprüfung verifizieren (kein Browserstart, keine Budget-Reservierung). Unterstützt werden `KV_REST_API_URL` und `KV_REST_API_TOKEN` gemeinsam, alternativ das Legacy-Paar `UPSTASH_REDIS_REST_URL` und `UPSTASH_REDIS_REST_TOKEN`. Keine Kreuzkombination aus unterschiedlichen Provider-Variablen. Anschließend atomare Reservierung gegen echte Redis-Testumgebung, parallele Requests, Browsersitzung und Viewer im Browser testen; danach UI aktivieren und verifizieren, dass der WebUntis-Stundenplan wirklich lesbar ist.

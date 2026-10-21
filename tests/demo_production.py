@@ -20,6 +20,12 @@ class Production(unittest.TestCase):
   self.assertIn('localStorage',script)
   self.assertIn('/api/connect',script)
   self.assertNotIn("from './auth.js'",script)
+ def test_upstash_read_only_connection(self):
+  import json
+  with urlopen(BASE+'/api/agent/redis-health',timeout=20) as response:
+   self.assertEqual(response.status,200)
+   data=json.loads(response.read().decode('utf8'))
+  self.assertEqual(data,{'available':True})
  def test_browserbase_server_connection(self):
   # Production-only credentials; must be a read-only probe without browser creation.
   import json
