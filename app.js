@@ -1,8 +1,10 @@
 import {mondayISO,parseUntisUrl} from './lib.js';
+import {parseIcalUrl} from './ical.js';
+const validateLink=url=>/\/WebUntis\/Ical\.do(?:\?|$)/i.test(url)?parseIcalUrl(url):parseUntisUrl(url);
 const KEY='fambo.device.links.v1';
 const $=id=>document.getElementById(id);
 const defaultSlots=()=>[{name:'Kind 1',url:''},{name:'Kind 2',url:''}];
-const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url)parseUntisUrl(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
+const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url)validateLink(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
 let children=restore();
 let editing=0,revision=0;
 const current=new Date();
@@ -16,7 +18,7 @@ function openEditor(index){editing=index;const child=children[index];$('child-na
 function showLessons(root,lessons){root.replaceChildren();const days=text('div','','days');const today=new Date().toISOString().slice(0,10);for(let i=0;i<5;i++){const day=offset(week,i),col=text('div','','day'+(day===today?' active':''));col.append(text('div',['Mo','Di','Mi','Do','Fr'][i]+' '+dateShort(day),'day-title'));const rows=lessons.filter(x=>x.date===day);if(!rows.length)col.append(text('p','–','empty'));for(const p of rows){const item=text('div','','lesson'+(p.cancelled?' cancelled':''));item.append(text('b',p.subject),text('small',p.start+(p.end?'–'+p.end:'')+(p.room?' · '+p.room:'')));col.append(item)}days.append(col)}root.append(days)}
 async function load(index,container,child,renderVersion){
  try{
-  const response=await fetch('/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:child.url,date:week}),cache:'no-store'});
+  const response=await fetch(/\/WebUntis\/Ical\.do(?:\?|$)/i.test(child.url)?'/api/ical':'/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:child.url,date:week}),cache:'no-store'});
   const body=await response.json();
   if(renderVersion!==revision)return;
   if(!response.ok)throw Error(body.error||'Der Stundenplan konnte nicht geladen werden.');
@@ -29,7 +31,7 @@ async function load(index,container,child,renderVersion){
  }
 }
 function render(){const version=++revision;$('week-label').textContent=dateShort(week)+' – '+dateShort(offset(week,6));$('schedules').replaceChildren();children.forEach((child,index)=>{
- const card=text('article','','schedule');const head=text('div','','schedule-head');head.append(text('span',index===0?'☀':'✿','avatar'));const title=text('div','');title.append(text('h2',child.url?child.name:'Stundenplan '+(index+1)),text('div',child.url?'WebUntis verbunden':'Noch nicht verbunden','small'));head.append(title);card.append(head);
+ const card=text('article','','schedule');const head=text('div','','schedule-head');head.append(text('span',index===0?'☀':'✿','avatar'));const title=text('div','');title.append(text('h2',child.url?child.name:'Stundenplan '+(index+1)),text('div',child.url?'WebUntis-Kalender':'Noch nicht verbunden','small'));head.append(title);card.append(head);
  const panel=text('div','','card-content');card.append(panel);
  if(!child.url){const empty=text('div','','connect-empty');empty.append(text('div','✺','connect-mark'),text('strong','Dein Stundenplan beginnt hier'),text('p','Verbinde WebUntis und sieh deinen Stundenplan direkt auf dieser Familienwand.'));const button=text('button','WebUntis verbinden','primary');button.onclick=()=>openEditor(index);empty.append(button);panel.append(empty)}
  else{panel.append(text('div','Stundenplan wird geladen …','state'));load(index,panel,child,version);const change=text('button','Verbindung verwalten','manage-link');change.onclick=()=>openEditor(index);card.append(change)}
@@ -39,6 +41,6 @@ $('previous').onclick=()=>{week=offset(week,-7);render()};
 $('next').onclick=()=>{week=offset(week,7);render()};
 $('today').onclick=()=>{const d=new Date();week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));render()};
 $('close-dialog').onclick=()=>$('connection-dialog').close();
-$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');parseUntisUrl(url);children[editing]={name,url};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
+$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');validateLink(url);children[editing]={name,url};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
 $('remove-connection').onclick=()=>{children[editing]=defaultSlots()[editing];save();$('connection-dialog').close();render()};
 clock();setInterval(clock,30000);setInterval(()=>{if(!$('connection-dialog').open&&children.some(x=>x.url))render()},300000);render();
