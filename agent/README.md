@@ -15,3 +15,7 @@ Keine Kennwörter in Fambo, Konsole, Chat oder GitHub eingeben. Die Browser-Sitz
 Der Test ist bewusst nicht unbeaufsichtigt und übernimmt keine Captchas/2FA automatisch. Er umgeht keine WebUntis-Schutzmaßnahmen. Schuleigene Nutzungsbedingungen und Zugriffsbeschränkungen gelten weiterhin.
 
 **Offene Punkte vor Produktivbetrieb:** echtes WebUntis-Antwortformat mit einer freiwilligen Testanmeldung verifizieren, Sitzungsablauf, laufende Synchronisation, sichere Gerätebindung und autorisierter Datenabruf. Keine echten Schülerdaten auf öffentliches Fambo hochladen.
+
+## GitHub Actions
+
+Der Chromium-Test `tests/agent_browser_test.py` simuliert die Netzwerkantwort einer WebUntis-Stundenplanseite und prüft, dass ausschließlich Unterrichtsinformationen extrahiert werden. Dieser Test benötigt **kein WebUntis-Konto, kein Passwort und keine Sitzungs-Cookies**. Er prüft **nicht**, ob eine echte Anmeldung in GitHub Actions möglich ist. Eine zeitgesteuerte Produktion-Synchronisation ist noch nicht eingerichtet.
