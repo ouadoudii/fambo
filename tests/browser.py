@@ -27,6 +27,8 @@ class ConnectFlows(unittest.TestCase):
       if name in ('index.html','app.js','styles.css','lib.js'):
        mime={'html':'text/html','js':'text/javascript','css':'text/css'}[name.split('.')[-1]]
        return r.fulfill(status=200,content_type=mime,body=(ROOT/name).read_bytes())
+     if url.startswith('https://school.webuntis.com/'):
+      return r.fulfill(status=200,content_type='text/html',body='<title>WebUntis Schulwahl</title><h1>Schule wählen</h1>')
      return r.abort()
     page.route('**/*',route)
     page.goto('https://family.test/')
