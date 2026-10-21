@@ -34,14 +34,15 @@ class ConnectFlows(unittest.TestCase):
     self.assertEqual(page.locator('input[type=password],#auth-form').count(),0)
     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
     page.get_by_role('button',name='WebUntis verbinden').first.click()
-    page.get_by_role('button',name='WebUntis-Seite anzeigen').click()
-    self.assertTrue(page.locator('#webuntis-panel').is_visible())
-    frame=page.locator('#webuntis-frame')
-    self.assertEqual(frame.get_attribute('src'),'https://webuntis.com/')
-    self.assertEqual(page.locator('#webuntis-external').get_attribute('href'),'https://webuntis.com/')
-    self.assertIn('noopener',page.locator('#webuntis-external').get_attribute('rel'))
-    # Browser cannot read credentials from the WebUntis cross-origin frame.
-    self.assertIsNone(page.locator('input[type=password]').first.element_handle(timeout=1000) if page.locator('input[type=password]').count() else None)
+    # A real browser click opens the canonical school finder, not a blocked iframe.
+    self.assertEqual(page.locator('iframe').count(),0)
+    school=page.locator('#webuntis-external')
+    self.assertEqual(school.get_attribute('href'),'https://school.webuntis.com/')
+    self.assertIn('noopener',school.get_attribute('rel'))
+    with page.expect_popup() as popup:
+     school.click()
+    self.assertEqual(popup.value.url.split('?')[0].rstrip('/'),'https://school.webuntis.com')
+    popup.value.close()
     page.locator('#child-name').fill('Mein Kind')
     page.locator('#child-url').fill(LINK)
     page.get_by_role('button',name='Verbinden',exact=True).click()
