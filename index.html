@@ -3,16 +3,28 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f8f6f1">
+<meta name="referrer" content="no-referrer">
 <title>Fambo – Unsere Familienwand</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main id="dashboard" class="shell">
-<header class="top"><div><div class="eyebrow">ZU HAUSE IST, WO WIR ZUSAMMENKOMMEN</div><h1>Unsere Familienwand <span>✺</span></h1><p class="subtitle" id="day-label"></p></div><div class="clock" id="clock"></div></header>
-<div id="demo-banner" class="demo-banner" role="status">DEMO · Beispieldaten – keine echten WebUntis-Stundenpläne</div>
+<main class="shell" id="dashboard">
+<header class="top"><div><div class="eyebrow">DEIN ZUHAUSE, DEIN PLAN</div><h1>Unsere Familienwand <span>✺</span></h1><p class="subtitle" id="day-label"></p></div><div class="clock" id="clock"></div></header>
+<div class="privacy-note"><span aria-hidden="true">◈</span> Deine Verbindungen werden nur in diesem Browser gespeichert. Andere Besucher sehen sie nicht.</div>
 <div class="bar"><div class="switches"><button id="previous" aria-label="Vorherige Woche">‹</button><strong id="week-label"></strong><button id="next" aria-label="Nächste Woche">›</button><button class="today" id="today">Heute</button></div></div>
 <section class="schedules" id="schedules" aria-label="Stundenpläne"></section>
-<footer><span>Mit Liebe organisiert ♡</span><span>Fiktive Beispielstundenpläne – kein WebUntis-Zugriff</span></footer>
+<footer><span>Mit Liebe organisiert ♡</span><span>Keine Anmeldung · kein gemeinsamer Familienbereich</span></footer>
 </main>
+<dialog id="connection-dialog" aria-labelledby="dialog-title">
+<form id="connection-form">
+<div class="dialog-head"><h2 id="dialog-title">WebUntis verbinden</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
+<p class="hint">Kopiere den öffentlichen Stundenplan-Link aus WebUntis. Dein Link wird nur in diesem Browser gespeichert.</p>
+<label>Anzeige-Name<input id="child-name" name="name" maxlength="30" required placeholder="z. B. Mein Kind" autocomplete="off"></label>
+<label>Öffentlicher WebUntis-Link<input id="child-url" name="url" type="url" required placeholder="https://schule.webuntis.com/WebUntis?school=…" autocomplete="off"></label>
+<p id="form-error" class="error" role="alert"></p>
+<button class="primary" type="submit">Verbinden</button>
+<button id="remove-connection" type="button" class="disconnect" hidden>Verbindung auf diesem Gerät entfernen</button>
+</form>
+</dialog>
 <script type="module" src="app.js"></script>
 </body></html>

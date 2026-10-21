@@ -1,26 +1,20 @@
-"""Verify no login UI is present on deployed public Fambo wall."""
+"""Post-deploy checks: empty first-run page, local connection assets and legacy privacy."""
 import os,unittest
 from urllib.request import urlopen
 BASE=os.environ.get('FAMBO_BASE_URL','https://fambo.vercel.app').rstrip('/')
-class PublicProduction(unittest.TestCase):
- def test_live_wall_has_no_login(self):
-  with urlopen(BASE+'/',timeout=20) as resp:
-   self.assertEqual(resp.status,200)
-   html=resp.read().decode('utf-8')
-  self.assertIn('id="dashboard"',html)
-  self.assertIn('id="demo-banner"',html)
-  for forbidden in ('id="auth-form"','id="private-login"','id="auth-email"','id="logout"','id="demo-start"'):
-   self.assertNotIn(forbidden,html)
- def test_local_demo_is_deployed(self):
-  with urlopen(BASE+'/demo.js',timeout=20) as resp:
-   self.assertEqual(resp.status,200)
-   script=resp.read().decode('utf-8')
-  self.assertIn('DEMO_CHILDREN',script)
-  self.assertNotIn('supabase.co',script.lower())
- def test_no_auth_module_in_public_app(self):
-  with urlopen(BASE+'/app.js',timeout=20) as resp:
-   self.assertEqual(resp.status,200)
-   script=resp.read().decode('utf-8')
+class Production(unittest.TestCase):
+ def test_empty_first_run_and_connect_action(self):
+  with urlopen(BASE+'/',timeout=20) as response:
+   self.assertEqual(response.status,200);html=response.read().decode('utf8')
+  self.assertIn('id="connection-form"',html)
+  self.assertIn('id="schedules"',html)
+  self.assertNotIn('Alex',html)
+  self.assertNotIn('demo-banner',html)
+  self.assertNotIn('auth-form',html)
+ def test_connection_assets_exist_without_login(self):
+  with urlopen(BASE+'/app.js',timeout=20) as response:
+   self.assertEqual(response.status,200);script=response.read().decode('utf8')
+  self.assertIn('localStorage',script)
+  self.assertIn('/api/connect',script)
   self.assertNotIn("from './auth.js'",script)
-  self.assertNotIn('initAuth()',script)
 if __name__=='__main__':unittest.main()
