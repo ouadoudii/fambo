@@ -18,15 +18,11 @@
 <dialog id="connection-dialog" aria-labelledby="dialog-title">
 <form id="connection-form">
 <div class="dialog-head"><h2 id="dialog-title">WebUntis verbinden</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
-<p class="hint">Öffne die originale WebUntis-Seite, um dich bei deiner Schule anzumelden. Fambo erhält dabei weder dein Passwort noch deine Sitzung.</p>
+<p class="hint">WebUntis benötigt die Anmeldung auf der Seite deiner Schule. Öffne die offizielle Schulsuche in einem neuen Tab und melde dich dort an. Das Passwort bleibt bei WebUntis.</p>
 <div class="portal-tools">
-  <button id="webuntis-show" type="button" class="portal-button">WebUntis-Seite anzeigen <span aria-hidden="true">↗</span></button>
-  <a id="webuntis-external" href="https://webuntis.com/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Direkt bei WebUntis öffnen</a>
+  <a id="webuntis-external" class="portal-button portal-link" href="https://school.webuntis.com/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Schule bei WebUntis auswählen ↗</a>
 </div>
-<section id="webuntis-panel" class="webuntis-panel" hidden aria-label="WebUntis Originalseite">
-  <p class="portal-notice">Dies ist die originale WebUntis-Seite. Falls sie hier nicht angezeigt wird, nutze „Direkt bei WebUntis öffnen“.</p>
-  <iframe id="webuntis-frame" title="WebUntis – Schulauswahl und Anmeldung" referrerpolicy="no-referrer" sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy"></iframe>
-</section>
+<p class="portal-notice">Hinweis: Die Anmeldung bei WebUntis übernimmt den Stundenplan noch nicht automatisch in Fambo. Dafür muss die Schule einen öffentlichen Stundenplan freigeben oder eine offizielle Integration erlauben.</p>
 <div class="portal-separator"><span>Öffentlichen Stundenplan übernehmen</span></div>
 <p class="hint">Falls deine Schule einen öffentlichen Stundenplan-Link freigibt, kannst du ihn hier eintragen. Eine WebUntis-Anmeldung allein verbindet Fambo noch nicht automatisch.</p>
 <label>Anzeige-Name<input id="child-name" name="name" maxlength="30" required placeholder="z. B. Mein Kind" autocomplete="off"></label>
