@@ -23,10 +23,10 @@
   <a id="webuntis-external" class="portal-button portal-link" href="https://school.webuntis.com/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Schule bei WebUntis auswählen ↗</a>
 </div>
 <p class="portal-notice">Hinweis: Die Anmeldung bei WebUntis übernimmt den Stundenplan noch nicht automatisch in Fambo. Dafür muss die Schule einen öffentlichen Stundenplan freigeben oder eine offizielle Integration erlauben.</p>
-<div class="portal-separator"><span>Öffentlichen Stundenplan übernehmen</span></div>
-<p class="hint">Falls deine Schule einen öffentlichen Stundenplan-Link freigibt, kannst du ihn hier eintragen. Eine WebUntis-Anmeldung allein verbindet Fambo noch nicht automatisch.</p>
+<div class="portal-separator"><span>Stundenplan in Fambo verbinden</span></div>
+<p class="hint">**Empfohlen:** Melde dich bei WebUntis an, gehe zu „Mein Stundenplan“ → ⋯ → „iCal-Abo verwalten“ → „Link erstellen“. Kopiere diesen persönlichen Kalenderlink hierher. Das funktioniert nur, wenn deine Schule iCal-Abos freigeschaltet hat.</p><p class="hint">Alternativ kannst du einen öffentlichen Schüler-Stundenplan-Link nutzen, wenn deine Schule ihn freigibt.</p><p class="privacy-note">Der iCal-Link ist privat: Wer ihn besitzt, kann deinen Kalender lesen. Teile ihn nicht öffentlich. Fambo speichert ihn nur in diesem Browser.</p>
 <label>Anzeige-Name<input id="child-name" name="name" maxlength="30" required placeholder="z. B. Mein Kind" autocomplete="off"></label>
-<label>Öffentlicher WebUntis-Link<input id="child-url" name="url" type="url" required placeholder="https://schule.webuntis.com/WebUntis?school=…" autocomplete="off"></label>
+<label>WebUntis-iCal-Link oder öffentlicher Stundenplan-Link<input id="child-url" name="url" type="url" required placeholder="https://…webuntis.com/WebUntis/Ical.do?…" autocomplete="off"></label>
 <p id="form-error" class="error" role="alert"></p>
 <button class="primary" type="submit">Verbinden</button>
 <button id="remove-connection" type="button" class="disconnect" hidden>Verbindung auf diesem Gerät entfernen</button>
