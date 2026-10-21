@@ -18,3 +18,13 @@
 .connect-empty .primary{max-width:270px}.manage-link{border:0;background:transparent;color:#52725c;margin-top:16px;text-decoration:underline;font-size:13px}
 .disconnect{border:0;background:transparent;color:#a44f49;width:100%;margin-top:15px;text-decoration:underline}
 dialog{max-height:90vh;overflow:auto}
+
+.portal-tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:20px 0 16px}
+.portal-button{background:#e8efe6;color:#345c41;border:1px solid #bbcebc;font-weight:700;flex:1;min-width:190px}
+.portal-tools a{font-size:13px;color:#34634c;min-height:44px;display:inline-flex;align-items:center}
+.webuntis-panel{border:1px solid #d6ded3;border-radius:14px;background:#f9faf7;padding:12px;margin:12px 0 22px}
+.portal-notice{font-size:12px;color:#6a756f;line-height:1.6;margin:0 0 12px}
+#webuntis-frame{display:block;border:1px solid #d7ddd5;border-radius:8px;width:100%;height:min(55vh,500px);background:white}
+.portal-separator{display:flex;align-items:center;gap:12px;color:#8a938b;font-size:12px;margin:22px 0 15px}
+.portal-separator:before,.portal-separator:after{content:"";height:1px;background:#dfe6dc;flex:1}
+@media(max-width:510px){.portal-tools{display:flex;flex-direction:column;align-items:stretch}.portal-button{flex:auto;min-width:0}.portal-tools a{justify-content:center}#webuntis-frame{height:48vh}}
