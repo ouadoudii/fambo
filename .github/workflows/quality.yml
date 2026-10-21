@@ -12,6 +12,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - run: python -m unittest discover -s tests -p agent_extract_test.py
       - run: npm run audit
       - run: npm run build
       - run: pip install playwright
