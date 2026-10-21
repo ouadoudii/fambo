@@ -4,6 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).parents[1]
 LINK='https://demo.webuntis.com/WebUntis?school=demo#/basic/timetablePublic/my-student?entityId=1234'
+ICAL='https://demo.webuntis.com/WebUntis/Ical.do?school=demo&id=1&token=fictional'
 class ConnectFlows(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -19,7 +20,7 @@ class ConnectFlows(unittest.TestCase):
     api=[]
     def route(r):
      url=r.request.url
-     if url.endswith('/api/connect'):
+     if url.endswith('/api/ical') or url.endswith('/api/connect'):
       api.append(r.request.post_data_json)
       return r.fulfill(status=200,content_type='application/json',body=json.dumps({'lessons':[{'id':'1','date':'2026-10-19','subject':'Mathematik','start':'08:00','end':'08:45','room':'101','cancelled':False}]}))
      if url.startswith('https://family.test'):
@@ -61,6 +62,13 @@ class ConnectFlows(unittest.TestCase):
     self.assertEqual(second.get_by_role('button',name='WebUntis verbinden').count(),2)
     self.assertEqual(second.get_by_role('heading',name='Mein Kind').count(),0)
     other.close()
+    page.get_by_role('button',name='Verbindung verwalten').click()
+    page.locator('#child-url').fill(ICAL)
+    page.get_by_role('button',name='Verbinden',exact=True).click()
+    page.get_by_role('heading',name='Mein Kind').wait_for()
+    self.assertEqual(api[-1]['url'],ICAL)
+    page.reload()
+    page.get_by_role('heading',name='Mein Kind').wait_for()
     page.get_by_role('button',name='Verbindung verwalten').click()
     page.get_by_role('button',name='Verbindung auf diesem Gerät entfernen').click()
     self.assertEqual(page.get_by_role('button',name='WebUntis verbinden').count(),2)
