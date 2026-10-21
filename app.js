@@ -24,7 +24,9 @@ form.addEventListener('submit',async event=>{if(event.submitter?.value!=='save')
 let registration=false;
 function showAuth(message=''){demoMode=false;$('demo-banner').hidden=true;$('settings').hidden=false;$('auth-view').hidden=false;$('dashboard').hidden=true;$('auth-error').textContent=message;}
 async function showDashboard() {if(demoMode)return;children=await loadFamily();fill();$('auth-view').hidden=true;$('dashboard').hidden=false;await render();}
-$('demo-start').addEventListener('click',()=>{demoMode=true;children=DEMO_CHILDREN.map(child=>({...child}));fill();$('demo-banner').hidden=false;$('settings').hidden=true;$('auth-view').hidden=true;$('dashboard').hidden=false;render();});
+function startDemo(){demoMode=true;children=DEMO_CHILDREN.map(child=>({...child}));fill();$('demo-banner').hidden=false;$('settings').hidden=true;$('auth-view').hidden=true;$('dashboard').hidden=false;render();}
+$('demo-start').addEventListener('click',startDemo);
+$('private-login').addEventListener('click',()=>showAuth());
 $('auth-toggle').addEventListener('click',()=>{registration=!registration;$('auth-submit').textContent=registration?'Registrieren':'Anmelden';$('auth-toggle').textContent=registration?'Bereits registriert? Anmelden':'Noch kein Konto? Registrieren';$('auth-error').textContent='';});
 $('auth-form').addEventListener('submit',async event=>{
  event.preventDefault();
@@ -38,7 +40,8 @@ $('auth-form').addEventListener('submit',async event=>{
  }catch(e){$('auth-error').textContent=e.message;}
  finally{submit.disabled=false}
 });
-$('logout').addEventListener('click',async()=>{if(demoMode){children=INITIAL;showAuth();return;}try{await signOut()}finally{children=INITIAL;showAuth();}});
-showAuth();
-initAuth().then(async user=>{if(user)await showDashboard()}).catch(e=>showAuth(e.message));
+$('logout').addEventListener('click',async()=>{if(demoMode){startDemo();return;}try{await signOut()}finally{children=INITIAL;startDemo();}});
+startDemo();
+// Public visitors see only fictional data. Existing authenticated families remain private.
+initAuth().then(async user=>{if(user)await showDashboard()}).catch(()=>startDemo());
 setInterval(()=>{(demoMode||currentUser())&&!$('settings-dialog').open&&render()},300000);
