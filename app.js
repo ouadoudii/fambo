@@ -41,4 +41,59 @@ $('today').onclick=()=>{const d=new Date();week=mondayISO([d.getFullYear(),Strin
 $('close-dialog').onclick=()=>$('connection-dialog').close();
 $('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');parseUntisUrl(url);children[editing]={name,url};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
 $('remove-connection').onclick=()=>{children[editing]=defaultSlots()[editing];save();$('connection-dialog').close();render()};
+
+let cloudUrl='';
+async function cloudRequest(path,options){
+ const response=await fetch(path,{credentials:'same-origin',cache:'no-store',...options});
+ const body=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error(body.error||'Verbindung derzeit nicht verfügbar.');
+ return body;
+}
+const cloudMessage=value=>{$('cloud-status').textContent=value};
+async function refreshCloud(){
+ $('cloud-start').disabled=true;
+ try{
+  const status=await cloudRequest('/api/agent/status');
+  $('cloud-start').disabled=!status.available;
+  cloudMessage(status.available?'Bereit für eine geschützte Browser-Sitzung.':'Cloud-Browser momentan noch nicht verfügbar.');
+ }catch{cloudMessage('Cloud-Browser momentan noch nicht verfügbar.')}
+}
+$('cloud-start').onclick=async()=>{
+ $('cloud-start').disabled=true;
+ cloudMessage('Geschützter Browser wird gestartet …');
+ try{
+  await cloudRequest('/api/agent/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  const session=await cloudRequest('/api/agent/session');
+  const url=new URL(session.viewer);
+  if(url.protocol!=='https:'||!(url.hostname==='browserbase.com'||url.hostname.endsWith('.browserbase.com')))throw Error('Ungültige Browser-Adresse');
+  cloudUrl=url.href;
+  $('cloud-viewer').href=cloudUrl;
+  $('cloud-viewer').hidden=false;
+  $('cloud-stop').hidden=false;
+  cloudMessage('Browser bereit. Öffne ihn, wähle deine Schule und melde dich direkt bei WebUntis an.');
+ }catch(err){
+  cloudMessage(err.message||'Browser konnte nicht gestartet werden.');
+  $('cloud-viewer').hidden=true;
+  $('cloud-stop').hidden=true;
+  cloudUrl='';
+  await refreshCloud();
+ }
+};
+$('cloud-stop').onclick=async()=>{
+ $('cloud-stop').disabled=true;
+ try{
+  await cloudRequest('/api/agent/session',{method:'DELETE',headers:{'Content-Type':'application/json'}});
+  cloudMessage('Browser-Sitzung beendet.');
+ }catch(err){cloudMessage(err.message||'Sitzung konnte nicht beendet werden.')}
+ finally{
+  cloudUrl='';
+  $('cloud-viewer').href='#';
+  $('cloud-viewer').hidden=true;
+  $('cloud-stop').hidden=true;
+  $('cloud-stop').disabled=false;
+  await refreshCloud();
+ }
+};
+refreshCloud();
+
 clock();setInterval(clock,30000);setInterval(()=>{if(!$('connection-dialog').open&&children.some(x=>x.url))render()},300000);render();
