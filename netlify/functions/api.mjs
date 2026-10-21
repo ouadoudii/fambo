@@ -36,6 +36,10 @@ export async function serveApi(request){
  }
  const headers={};
  request.headers.forEach((value,key)=>{headers[key.toLowerCase()]=value});
+ // Fetch Request host comes from its trusted URL; Node Request does not
+ // guarantee a host header is included in test environments.
+ if(headers.host&&headers.host.toLowerCase()!==url.host.toLowerCase())return Response.json({error:'Anfrage nicht erlaubt'},{status:403,headers:JSON_HEADERS});
+ headers.host=url.host;
  const query=Object.fromEntries(url.searchParams.entries());
  const req={method:request.method,headers,query,body};
  let statusCode=200,result;
