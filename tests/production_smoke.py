@@ -9,11 +9,10 @@ def fetch(path,headers=None):
   with urlopen(req,timeout=20) as resp:return resp.status,resp.read().decode('utf-8'),resp.headers.get('content-type','')
  except HTTPError as err:return err.code,err.read().decode('utf-8'),err.headers.get('content-type','')
 class ProductionSmoke(unittest.TestCase):
- def test_login_page(self):
+ def test_public_wall_page(self):
   code,body,_=fetch('/')
   self.assertEqual(code,200,'Production login page must be reachable')
-  self.assertIn('Familienzeit, ganz privat',body)
-  self.assertIn('auth-form',body)
+  self.assertIn('Unsere Familienwand',body)
  def test_supabase_public_config(self):
   code,body,_=fetch('/api/config')
   self.assertEqual(code,200,'Supabase config API must be available')
