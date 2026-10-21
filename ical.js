@@ -34,8 +34,8 @@ export function parseIcal(ics,week){
    if(event){
     const a=parseTime(event.DTSTART?.value,event.DTSTART?.timezone),b=parseTime(event.DTEND?.value,event.DTEND?.timezone);
     if(a&&b&&a.date>=week&&a.date<=weekEnd(week)){
-     const subject=unescapeText(event.SUMMARY)||'Unterricht';
-     lessons.push({id:String(event.UID||a.date+a.time+subject).slice(0,150),date:a.date,start:a.time,end:b.time,subject:subject.slice(0,120),room:unescapeText(event.LOCATION).slice(0,100),cancelled:String(event.STATUS||'').toUpperCase()==='CANCELLED'||/entfällt|ausfall|cancelled/i.test(subject)});
+     const subject=unescapeText(event.SUMMARY?.value)||'Unterricht';
+     lessons.push({id:String(event.UID?.value||a.date+a.time+subject).slice(0,150),date:a.date,start:a.time,end:b.time,subject:subject.slice(0,120),room:unescapeText(event.LOCATION?.value).slice(0,100),cancelled:String(event.STATUS?.value||'').toUpperCase()==='CANCELLED'||/entfällt|ausfall|cancelled/i.test(subject)});
     }
    }
    event=null;continue;
