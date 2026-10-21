@@ -50,7 +50,7 @@ test('Vercel Marketplace KV_REST_API_* credentials work without custom UPSTASH n
   assert.equal(url,'https://example.upstash.io/');
   assert.equal(options.headers.Authorization,'Bearer marketplace-test-token');
   const args=JSON.parse(options.body);
-  assert.match(args[1],/if not redis.call\\('SET',active,'1','EX',lock,'NX'\\) then return 0 end/);
+  assert.ok(args[1].includes("if not redis.call('SET',active,'1','EX',lock,'NX') then return 0 end"));
   return new Response(JSON.stringify({result:1}));
  }});
  assert.equal(ok,true);assert.equal(requests,1);
