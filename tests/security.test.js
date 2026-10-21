@@ -15,7 +15,8 @@ test('calendar accesses only logged-in user row',async()=>{
  visited.push(String(url));
  if(String(url).includes('/auth/v1/user'))return new Response(JSON.stringify({id:'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'}),{status:200});
  if(String(url).includes('rest/v1/family_plans'))return new Response(JSON.stringify([{children:[{name:'Child',url:'https://demo.webuntis.com/WebUntis?school=demo#/basic/timetablePublic/my-student?entityId=1234'},{name:'Other',url:''}]}]),{status:200});
- return new Response(JSON.stringify({data:{result:{data:{elementPeriods:{'1234':[]}}}}}),{status:200});
+ if(String(url).includes('/WebUntis?'))return new Response('<html>WebUntis</html>',{status:200,headers:{'set-cookie':'JSESSIONID=test-session; Path=/WebUntis'}});
+ return new Response(JSON.stringify({data:{result:{data:{elementPeriods:{'1234':[]}}}}}),{status:200,headers:{'content-type':'application/json'}});
  };
  try{const res=response();await handler(valid,res);assert.equal(res.statusCode,200);assert.equal(res.headers['Cache-Control'],'private, no-store');assert.ok(visited.some(u=>u.includes('user_id=eq.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')));assert.ok(visited.every(u=>!u.includes('attacker.com')))}
  finally{global.fetch=ORIGINAL}

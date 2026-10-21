@@ -1,4 +1,5 @@
 import {parseUntisUrl,mondayISO,normalizeTimetable} from '../lib.js';
+import {publicTimetable} from '../webuntis.js';
 // Requests are bound to an authenticated user's stored timetable; never accept arbitrary target URL.
 export default async function handler(req,res) {
  res.setHeader('Cache-Control','private, no-store');
@@ -20,9 +21,11 @@ export default async function handler(req,res) {
   const calendar=rows[0]?.children?.[slot];
   if(!calendar?.url)return res.status(404).json({error:'Für dieses Kind wurde noch kein Stundenplan hinterlegt'});
   const detail=parseUntisUrl(calendar.url);
-  const upstream=await fetch(`${detail.origin}/WebUntis/api/public/timetable/weekly/data?elementType=5&elementId=${encodeURIComponent(detail.entityId)}&date=${day}&formatId=1`,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(10000),redirect:'error'});
-  if(!upstream.ok)return res.status(502).json({error:`WebUntis antwortet mit Status ${upstream.status}`});
-  const lessons=normalizeTimetable(await upstream.json());
+  const lessons=normalizeTimetable(await publicTimetable(detail,day));
   return res.status(200).json({lessons,week:day});
- }catch{return res.status(502).json({error:'Stundenplan momentan nicht verfügbar'})}
+ }catch(error){
+  const message=String(error?.message||'');
+  if(message.includes('ohne Schul-Anmeldung'))return res.status(403).json({error:message});
+  return res.status(502).json({error:'Stundenplan momentan nicht verfügbar'});
+ }
 }
