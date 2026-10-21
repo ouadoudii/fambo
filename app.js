@@ -1,9 +1,11 @@
 import {parseUntisUrl,mondayISO} from './lib.js';
 import {initAuth,currentUser,signIn,signUp,signOut,token,loadFamily,saveFamily} from './auth.js';
+import {DEMO_CHILDREN,demoLessons} from './demo.js';
 const INITIAL=[{name:'Kind 1',url:''},{name:'Kind 2',url:''}];
 const $=id=>document.getElementById(id);
 const d=new Date(); let week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));
 let children=INITIAL;
+let demoMode=false;
 const dateShort=x=>new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'2-digit',timeZone:'UTC'}).format(new Date(`${x}T12:00:00Z`));
 const dateLong=x=>new Intl.DateTimeFormat('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(x);
 const mondayOffset=(iso,offset)=>{let d=new Date(`${iso}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+offset);return d.toISOString().slice(0,10)};
@@ -14,14 +16,15 @@ function renderCard(child,index){const card=text('article','','schedule');const 
 function showMessage(root,heading,message,url,button){root.replaceChildren();const box=text('div','','state');box.append(text('strong',heading),text('p',message));if(url){const a=text('a','In WebUntis öffnen');a.href=url;a.target='_blank';a.rel='noopener noreferrer';box.append(a)}if(button){const b=text('button',button,'retry');b.addEventListener('click',()=>{$('settings-dialog').showModal()});box.append(b)}root.append(box);}
 function showLessons(root,lessons){root.replaceChildren();const days=text('div','','days');const now=new Date().toISOString().slice(0,10);for(let i=0;i<5;i++){const date=mondayOffset(week,i),col=text('div','','day'+(date===now?' active':''));col.append(text('div',['Mo','Di','Mi','Do','Fr'][i]+' '+dateShort(date),'day-title'));const rows=lessons.filter(p=>p.date===date);if(!rows.length)col.append(text('p','–','empty'));rows.forEach(p=>{const item=text('div','','lesson'+(p.cancelled?' cancelled':''));item.append(text('b',p.subject),text('small',p.start+(p.end?'–'+p.end:'')+(p.room?' · '+p.room:'')));col.append(item)});days.append(col)}root.append(days);}
 let renderId=0;
-async function render(){if(!currentUser())return;const current=++renderId;$('week-label').textContent=`${dateShort(week)} – ${dateShort(mondayOffset(week,6))}`;$('schedules').replaceChildren();for (let i=0;i<children.length;i++){const child=children[i];const {card,content}=renderCard(child,i);$('schedules').append(card);if(!child.url){showMessage(content,'Noch kein Stundenplan','Füge den öffentlichen WebUntis-Link hinzu.',null,'Link eintragen');continue;}try{parseUntisUrl(child.url);const jwt=await token();const response=await fetch(`/api/timetable?slot=${i}&date=${week}`,{headers:{Authorization:`Bearer ${jwt}`},cache:'no-store'});const payload=await response.json();if(current!==renderId)return;if(!response.ok)throw Error(payload.error||'Unbekannter Fehler');showLessons(content,payload.lessons);}catch(error){if(current!==renderId)return;showMessage(content,'Stundenplan nicht verfügbar',error.message,child.url,'Link prüfen');}}}
+async function render(){if(!demoMode&&!currentUser())return;const current=++renderId;$('week-label').textContent=`${dateShort(week)} – ${dateShort(mondayOffset(week,6))}`;$('schedules').replaceChildren();for (let i=0;i<children.length;i++){const child=children[i];const {card,content}=renderCard(child,i);$('schedules').append(card);if(demoMode){showLessons(content,demoLessons(week,i));continue;}if(!child.url){showMessage(content,'Noch kein Stundenplan','Füge den öffentlichen WebUntis-Link hinzu.',null,'Link eintragen');continue;}try{parseUntisUrl(child.url);const jwt=await token();const response=await fetch(`/api/timetable?slot=${i}&date=${week}`,{headers:{Authorization:`Bearer ${jwt}`},cache:'no-store'});const payload=await response.json();if(current!==renderId)return;if(!response.ok)throw Error(payload.error||'Unbekannter Fehler');showLessons(content,payload.lessons);}catch(error){if(current!==renderId)return;showMessage(content,'Stundenplan nicht verfügbar',error.message,child.url,'Link prüfen');}}}
 $('previous').onclick=()=>{week=mondayOffset(week,-7);render()};$('next').onclick=()=>{week=mondayOffset(week,7);render()};$('today').onclick=()=>{const n=new Date();week=mondayISO([n.getFullYear(),String(n.getMonth()+1).padStart(2,'0'),String(n.getDate()).padStart(2,'0')].join('-'));render()};
-$('settings').onclick=()=>{$('settings-dialog').showModal()};
+$('settings').onclick=()=>{if(demoMode)return;$('settings-dialog').showModal()};
 const form=$('settings-form');function fill(){children.forEach((c,i)=>{form.elements[`name${i}`].value=c.name;form.elements[`url${i}`].value=c.url})}fill();
 form.addEventListener('submit',async event=>{if(event.submitter?.value!=='save')return;event.preventDefault();const next=[0,1].map(i=>({name:form.elements[`name${i}`].value.trim(),url:form.elements[`url${i}`].value.trim()}));try{next.forEach(c=>{if(!c.name)throw Error('Bitte beide Namen eintragen.');if(c.url)parseUntisUrl(c.url)});await saveFamily(next);children=next;$('form-error').textContent='';$('settings-dialog').close();render();}catch(e){$('form-error').textContent=e.message;}});
 let registration=false;
-function showAuth(message=''){$('auth-view').hidden=false;$('dashboard').hidden=true;$('auth-error').textContent=message;}
-async function showDashboard() {children=await loadFamily();fill();$('auth-view').hidden=true;$('dashboard').hidden=false;await render();}
+function showAuth(message=''){demoMode=false;$('demo-banner').hidden=true;$('settings').hidden=false;$('auth-view').hidden=false;$('dashboard').hidden=true;$('auth-error').textContent=message;}
+async function showDashboard() {if(demoMode)return;children=await loadFamily();fill();$('auth-view').hidden=true;$('dashboard').hidden=false;await render();}
+$('demo-start').addEventListener('click',()=>{demoMode=true;children=DEMO_CHILDREN.map(child=>({...child}));fill();$('demo-banner').hidden=false;$('settings').hidden=true;$('auth-view').hidden=true;$('dashboard').hidden=false;render();});
 $('auth-toggle').addEventListener('click',()=>{registration=!registration;$('auth-submit').textContent=registration?'Registrieren':'Anmelden';$('auth-toggle').textContent=registration?'Bereits registriert? Anmelden':'Noch kein Konto? Registrieren';$('auth-error').textContent='';});
 $('auth-form').addEventListener('submit',async event=>{
  event.preventDefault();
@@ -35,7 +38,7 @@ $('auth-form').addEventListener('submit',async event=>{
  }catch(e){$('auth-error').textContent=e.message;}
  finally{submit.disabled=false}
 });
-$('logout').addEventListener('click',async()=>{try{await signOut()}finally{children=INITIAL;showAuth();}});
+$('logout').addEventListener('click',async()=>{if(demoMode){children=INITIAL;showAuth();return;}try{await signOut()}finally{children=INITIAL;showAuth();}});
 showAuth();
 initAuth().then(async user=>{if(user)await showDashboard()}).catch(e=>showAuth(e.message));
-setInterval(()=>{if(currentUser()&&!$('settings-dialog').open)render()},300000);
+setInterval(()=>{(demoMode||currentUser())&&!$('settings-dialog').open&&render()},300000);
