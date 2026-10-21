@@ -17,6 +17,7 @@ jobs:
       - run: npm run build
       - run: pip install playwright
       - run: python -m playwright install --with-deps chromium
+      - run: python tests/agent_browser_test.py
       - run: python tests/browser.py
       - name: Production API and privacy smoke
         run: python tests/production_smoke.py
