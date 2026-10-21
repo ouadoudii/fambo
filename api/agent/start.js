@@ -7,7 +7,7 @@ const VALID=/^[A-Za-z0-9_-]{43}$/;
 export function expectedOrigin(req){
  const host=String(req.headers?.host||'').toLowerCase();
  // Host allowlist prevents redirecting user traffic to a spoofed domain.
- if(host==='fambo.vercel.app'||host==='fambo-dadda3ettaa-4200.vercel.app')return 'https://'+host;
+ if(host==='fambo.vercel.app'||host==='fambo-dadda3ettaa-4200.vercel.app'||host==='fambo-family.netlify.app')return 'https://'+host;
  return '';
 }
 export default async function handler(req,res){
