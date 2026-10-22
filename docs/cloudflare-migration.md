@@ -25,3 +25,9 @@ Factory Quality Gate: Typecheck, Lint, Unit-/Contract-/Security-Tests, `npm audi
 ## Noch offen
 
 GitHub-to-Cloudflare-Verbindung, Produktions-Deploy, serverseitige Secret-Einrichtung, Live-Browser/Redis-Tests und echte WebUntis-Stundenplanübernahme. Vercel nicht abschalten, bevor diese Checks nachweislich erfolgreich sind.
+
+## Cloudflare Workers Builds: erforderlicher Deploy-Befehl
+
+Cloudflare Workers Builds führt den Deploy-Befehl aus dem Dashboard aus. Laut aktueller Cloudflare-Dokumentation ignoriert Workers Builds die Custom-Build-Konfiguration im Wrangler-Konfigurationsfile. **Deshalb** im bestehenden Worker `fambo` unter **Settings → Build** als **Deploy command** exakt `npm run deploy:cloudflare` setzen. Das Skript erzeugt erst `dist/` und startet danach den Worker-Deploy. Root directory ist das Repository-Root. Den eigenen Build command kann man dann leer lassen, um einen redundanten Build zu vermeiden. Das ist eine Cloudflare-Dashboard-Einstellung, die nicht durch GitHub-Commits erzwungen werden kann.
+
+Die GitHub-CI prüft dasselbe Skript mit `--dry-run`, ohne zu deployen. Ein grüner Dry Run bestätigt **nicht** den Account-Zugriff oder ein grünes Cloudflare-Deployment.
