@@ -14,7 +14,7 @@ test('read-only auth probe validates project and never starts browser sessions',
  assert.equal(seen.url,'https://api.browserbase.com/v1/projects/'+good.BROWSERBASE_PROJECT_ID);
  assert.equal(seen.options.method,'GET');
  assert.equal(seen.options.headers['X-BB-API-Key'],good.BROWSERBASE_API_KEY);
- assert.equal(seen.options.redirect,'error');
+ assert.equal(seen.options.redirect,'manual');
 });
 test('does not accept unrelated project or unauthorized key',async()=>{
  assert.equal(await checkBrowserbase({env:good,fetcher:async()=>new Response(JSON.stringify({id:'other'}))}),false);
