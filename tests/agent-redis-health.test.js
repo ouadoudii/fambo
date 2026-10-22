@@ -51,7 +51,7 @@ test('diagnostic reasons are safe, deterministic and exclude secrets',async()=>{
   assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
   assert.equal(JSON.stringify(result).includes(env.KV_REST_API_URL),false);
  }
- assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw Error('secret info')}}),{available:false,reason:'network'});
+ assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw Error('secret info')}}),{available:false,reason:'connection'});
 });
 
 test('diagnoses missing or malformed Redis bindings without disclosing their values',async()=>{
@@ -66,4 +66,10 @@ test('diagnoses missing or malformed Redis bindings without disclosing their val
   assert.equal(result.reason,reason);
   assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
  }
+});
+
+test('network diagnoses timeout and malformed upstream response separately',async()=>{
+ assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw new DOMException('secret','TimeoutError')}}),{available:false,reason:'timeout'});
+ assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>new Response('not json')}),{available:false,reason:'invalid_response'});
+ assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw new Error('secret')}}),{available:false,reason:'connection'});
 });
