@@ -46,7 +46,7 @@ let cloudUrl='';
 async function cloudRequest(path,options){
  const response=await fetch(path,{credentials:'same-origin',cache:'no-store',...options});
  const body=await response.json().catch(()=>({}));
- if(!response.ok)throw Error(body.error||'Verbindung derzeit nicht verfügbar.');
+ if(!response.ok){const err=Error(body.error||'Verbindung derzeit nicht verfügbar.');err.reason=body.reason;err.httpStatus=response.status;throw err;}
  return body;
 }
 const cloudMessage=value=>{$('cloud-status').textContent=value};
@@ -72,12 +72,21 @@ $('cloud-start').onclick=async()=>{
   $('cloud-stop').hidden=false;
   cloudMessage('Browser bereit. Öffne ihn, wähle deine Schule und melde dich direkt bei WebUntis an.');
  }catch(err){
-  cloudMessage(err.message||'Browser konnte nicht gestartet werden.');
+  const hints={
+   authentication:'Browserbase-Anmeldung abgelehnt. API-Key prüfen.',
+   billing:'Browserbase-Guthaben oder Abrechnung prüfen.',
+   quota:'Browserbase-Sitzungslimit erreicht.',
+   provider_unavailable:'Browserbase ist derzeit nicht erreichbar.',
+   request_rejected:'Browserbase hat die Sitzungserstellung abgelehnt.',
+   upstream_redirect:'Browserbase-Weiterleitung aus Sicherheitsgründen blockiert.',
+   session_setup_failed:'Browser-Sitzung konnte nicht eingerichtet werden.'
+  };
+  const reason=Object.hasOwn(hints,err.reason)?hints[err.reason]:(err.message||'Browser konnte nicht gestartet werden.');
   $('cloud-viewer').hidden=true;
   $('cloud-stop').hidden=true;
   cloudUrl='';
   await refreshCloud();
-  cloudMessage('Der Browser konnte nicht gestartet werden. Bitte später erneut versuchen.');
+  cloudMessage(reason);
  }
 };
 $('cloud-stop').onclick=async()=>{
