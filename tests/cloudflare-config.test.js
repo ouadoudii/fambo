@@ -8,7 +8,7 @@ test('Cloudflare deploy targets existing Worker, not an unintended second Worker
 });
 test('Cloudflare builds static files even if dashboard build command is unset',()=>{
  assert.equal(config.build.command,'npm run build');
- assert.equal(config.assets.directory,'./dist');
+ assert.equal(config.assets.directory,'./cloudflare/public');
  assert.equal(config.assets.binding,'ASSETS');
  assert.deepEqual(config.assets.run_worker_first,['/api/*']);
 });
