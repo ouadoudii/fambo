@@ -1,6 +1,6 @@
 import {agentLaunchAllowed} from '../../lib/agent-policy.js';
 import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,newDevice} from '../../lib/agent-device.js';
-import {reserveBrowserBudget} from '../../lib/agent-budget.js';
+import {browserBudgetDecision} from '../../lib/agent-budget.js';
 import {startCloudBrowser,releaseCloudBrowser,BrowserbaseSessionError} from '../../lib/browserbase-sessions.js';
 const COOKIE='__Host-fambo_device';
 const VALID=/^[A-Za-z0-9_-]{43}$/;
@@ -21,8 +21,8 @@ export default async function handler(req,res){
  if(!agentLaunchAllowed(env))return res.status(503).json({error:'Browser-Anmeldung ist noch nicht freigeschaltet.'});
  let device=cookieValue(req,COOKIE);
  if(!VALID.test(device))device=newDevice();
- const reserved=await reserveBrowserBudget({deviceId:device,env});
- if(!reserved)return res.status(429).json({error:'Browser momentan nicht verfügbar. Bitte später erneut versuchen.'});
+ const budget=await browserBudgetDecision({deviceId:device,env});
+ if(!budget.allowed)return res.status(budget.reason==='budget_unavailable'?503:429).json({error:'Browser momentan nicht verfügbar.',reason:budget.reason});
  let session;
  try{
   session=await startCloudBrowser({env});
