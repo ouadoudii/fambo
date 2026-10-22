@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {serveApi} from '../netlify/functions/api.mjs';
@@ -36,4 +37,11 @@ test('Cloudflare browser status is disabled without signed, rate-limited configu
  });
  assert.equal(response.status,200);
  assert.deepEqual(await response.json(),{available:false});
+});
+
+test('Cloudflare deployment persists the public Redis REST URL without committing credentials',()=>{
+ const config=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
+ assert.equal(config.vars.KV_REST_API_URL,'https://singular-moth-70968.upstash.io');
+ assert.equal('KV_REST_API_TOKEN' in config.vars,false);
+ assert.equal('BROWSERBASE_API_KEY' in config.vars,false);
 });
