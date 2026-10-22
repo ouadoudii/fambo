@@ -31,3 +31,9 @@ GitHub-to-Cloudflare-Verbindung, Produktions-Deploy, serverseitige Secret-Einric
 Cloudflare Workers Builds führt den Deploy-Befehl aus dem Dashboard aus. Laut aktueller Cloudflare-Dokumentation ignoriert Workers Builds die Custom-Build-Konfiguration im Wrangler-Konfigurationsfile. **Deshalb** im bestehenden Worker `fambo` unter **Settings → Build** als **Deploy command** exakt `npm run deploy:cloudflare` setzen. Das Skript erzeugt erst `dist/` und startet danach den Worker-Deploy. Root directory ist das Repository-Root. Den eigenen Build command kann man dann leer lassen, um einen redundanten Build zu vermeiden. Das ist eine Cloudflare-Dashboard-Einstellung, die nicht durch GitHub-Commits erzwungen werden kann.
 
 Die GitHub-CI prüft dasselbe Skript mit `--dry-run`, ohne zu deployen. Ein grüner Dry Run bestätigt **nicht** den Account-Zugriff oder ein grünes Cloudflare-Deployment.
+
+## Kein Dashboard-Build-Befehl mehr nötig (Cloudflare-Standard)
+
+Cloudflare Workers Builds verwendet im Standard **`npx wrangler deploy`** und darf seinen optionalen Build-Befehl leer lassen. `wrangler.jsonc` verweist deshalb direkt auf die vier geprüften und im Repository versionierten statischen Dateien unter `cloudflare/public/`. Dadurch braucht der GitHub-verbundene Worker keine Änderung der Cloudflare Build/Deploy-Einstellungen. Bei jeder Frontend-Änderung müssen die vier Kopien mit geändert werden; `tests/cloudflare-static-assets.test.js` vergleicht die Inhalte bytegenau und blockiert Abweichungen vor Merge. Der alternative Befehl `npm run deploy:cloudflare` bleibt für manuelle CLI-Deployments verfügbar, ist im Dashboard aber nicht nötig.
+
+**Wichtig:** Der bestehende Worker hat im Cloudflare-Dashboard noch `workers.dev` deaktiviert; eine veröffentlichte Worker-Version wird erst nach aktivierter Route erreichbar. Die Änderung am Repository ersetzt weder fehlende Cloudflare-Account-Autorisierung noch die Live-Verifikation.
