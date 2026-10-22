@@ -79,7 +79,11 @@ $('cloud-start').onclick=async()=>{
    provider_unavailable:'Browserbase ist derzeit nicht erreichbar.',
    request_rejected:'Browserbase hat die Sitzungserstellung abgelehnt.',
    upstream_redirect:'Browserbase-Weiterleitung aus Sicherheitsgründen blockiert.',
-   session_setup_failed:'Browser-Sitzung konnte nicht eingerichtet werden.'
+   session_setup_failed:'Browser-Sitzung konnte nicht eingerichtet werden.',
+   budget_busy:'Eine Sitzung ist noch reserviert. Bitte nach Ablauf der 15-Minuten-Sperre erneut versuchen.',
+   daily_limit:'Das Tageslimit für Cloud-Browser wurde erreicht.',
+   device_limit:'Das Tageslimit dieses Browsers wurde erreicht.',
+   budget_unavailable:'Die sichere Sitzungsbegrenzung (Redis) ist derzeit nicht erreichbar.'
   };
   const reason=Object.hasOwn(hints,err.reason)?hints[err.reason]:(err.message||'Browser konnte nicht gestartet werden.');
   $('cloud-viewer').hidden=true;
