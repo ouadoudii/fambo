@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {checkAgentRedis} from '../lib/agent-redis-health.js';
+import {checkAgentRedis,diagnoseAgentRedis} from '../lib/agent-redis-health.js';
 import handler from '../api/agent/redis-health.js';
 const env={KV_REST_API_URL:'https://my-cluster.upstash.io',KV_REST_API_TOKEN:'test-token-123456'};
 const mock=()=>({headers:{},statusCode:200,setHeader(k,v){this.headers[k]=v},status(c){this.statusCode=c;return this},json(x){this.body=x;return this}});
@@ -27,7 +27,7 @@ test('HTTP health never discloses Redis credentials',async()=>{
  try{
   global.fetch=async()=>new Response(JSON.stringify({result:'PONG'}));
   let res=mock();await handler({method:'GET'},res);
-  assert.equal(res.statusCode,200);assert.deepEqual(res.body,{available:true});
+  assert.equal(res.statusCode,200);assert.deepEqual(res.body,{available:true,reason:'ok'});
   assert.equal(JSON.stringify(res.body).includes(env.KV_REST_API_TOKEN),false);
   res=mock();await handler({method:'POST'},res);assert.equal(res.statusCode,405);
  }finally{
@@ -35,4 +35,21 @@ test('HTTP health never discloses Redis credentials',async()=>{
   if(oldURL===undefined)delete process.env.KV_REST_API_URL;else process.env.KV_REST_API_URL=oldURL;
   if(oldToken===undefined)delete process.env.KV_REST_API_TOKEN;else process.env.KV_REST_API_TOKEN=oldToken;
  }
+});
+
+test('diagnostic reasons are safe, deterministic and exclude secrets',async()=>{
+ const cases=[
+  [{},'configuration'],
+  [env,'authentication',401],
+  [env,'authentication',403],
+  [env,'upstream',500],
+  [env,'unexpected_response',200],
+ ];
+ for(const [settings,reason,status] of cases){
+  const result=await diagnoseAgentRedis({env:settings,fetcher:async()=>new Response('{}',{status:status||200})});
+  assert.equal(result.reason,reason);
+  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
+  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_URL),false);
+ }
+ assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw Error('secret info')}}),{available:false,reason:'network'});
 });
