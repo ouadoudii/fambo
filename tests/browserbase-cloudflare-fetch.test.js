@@ -33,6 +33,6 @@ test('Browserbase session start uses manual redirect and refuses redirects',asyn
   assert.equal(options.redirect,'manual');
   assert.equal(options.method,'POST');
   return new Response(null,{status:307,headers:{Location:'https://untrusted.example/'}})
- }}),/Weiterleitung verweigert/);
+ }}),error=>error.reason==='upstream_redirect');
  assert.equal(calls,1);
 });
