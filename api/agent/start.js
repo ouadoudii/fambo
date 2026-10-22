@@ -1,7 +1,7 @@
 import {agentLaunchAllowed} from '../../lib/agent-policy.js';
 import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,newDevice} from '../../lib/agent-device.js';
 import {reserveBrowserBudget} from '../../lib/agent-budget.js';
-import {startCloudBrowser,releaseCloudBrowser} from '../../lib/browserbase-sessions.js';
+import {startCloudBrowser,releaseCloudBrowser,BrowserbaseSessionError} from '../../lib/browserbase-sessions.js';
 const COOKIE='__Host-fambo_device';
 const VALID=/^[A-Za-z0-9_-]{43}$/;
 export function expectedOrigin(req){
@@ -29,9 +29,10 @@ export default async function handler(req,res){
   const ticket=createSessionTicket({sessionId:session.sessionId,deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
   res.setHeader('Set-Cookie',[deviceCookie(device),ticketCookie(ticket)]);
   return res.status(201).json({status:'created'});
- }catch{
+ }catch(error){
   // Reservation remains consumed to prevent unlimited retries when upstream fails.
   if(session?.sessionId)try{await releaseCloudBrowser(session.sessionId,{env})}catch{}
-  return res.status(502).json({error:'Browser konnte nicht gestartet werden.'});
+  const reason=error instanceof BrowserbaseSessionError?error.reason:'session_setup_failed';
+  return res.status(502).json({error:'Browser konnte nicht gestartet werden.',reason});
  }
 }
