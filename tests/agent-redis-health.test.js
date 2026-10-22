@@ -77,7 +77,7 @@ test('network diagnoses timeout and malformed upstream response separately',asyn
 
 test('Cloudflare fetch rejects with safe type error category',async()=>{
  const result=await diagnoseAgentRedis({env,fetcher:async()=>{throw new TypeError('must not disclose upstream credentials')}});
- assert.deepEqual(result,{available:false,reason:'fetch_type_error'});
+ assert.deepEqual(result,{available:false,reason:'unknown_fetch_type_error'});
  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
 });
 
@@ -87,4 +87,19 @@ test('Redis redirects never follow or forward bearer credentials',async()=>{
   return new Response('',{status:302,headers:{Location:'https://untrusted.example/'}});
  }});
  assert.deepEqual(result,{available:false,reason:'upstream_redirect'});
+});
+
+test('sanitized fetch causes reveal no raw upstream error details',async()=>{
+ const cases=[
+  ['Invalid redirect value','invalid_redirect'],
+  ['Fetch cannot be called in global scope','invalid_request_context'],
+  ['Invalid URL value','invalid_fetch_url'],
+  ['Invalid header name','invalid_request_header'],
+  ['fetch failed','fetch_network_failed']
+ ];
+ for(const [message,reason] of cases){
+  const result=await diagnoseAgentRedis({env,fetcher:async()=>{throw new TypeError(message+' '+env.KV_REST_API_TOKEN)}});
+  assert.deepEqual(result,{available:false,reason});
+  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
+ }
 });
