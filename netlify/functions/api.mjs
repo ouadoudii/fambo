@@ -21,7 +21,7 @@ const endpoints=new Map([
  ['/api/agent/session',agentSession],
 ]);
 const JSON_HEADERS={'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'};
-export async function serveApi(request){
+export async function serveApi(request,runtimeEnv){
  const url=new URL(request.url);
  const handler=endpoints.get(url.pathname);
  if(!handler)return Response.json({error:'Nicht gefunden'},{status:404,headers:JSON_HEADERS});
@@ -41,7 +41,7 @@ export async function serveApi(request){
  if(headers.host&&headers.host.toLowerCase()!==url.host.toLowerCase())return Response.json({error:'Anfrage nicht erlaubt'},{status:403,headers:JSON_HEADERS});
  headers.host=url.host;
  const query=Object.fromEntries(url.searchParams.entries());
- const req={method:request.method,headers,query,body};
+ const req={method:request.method,headers,query,body,runtimeEnv};
  let statusCode=200,result;
  const responseHeaders=new Headers(JSON_HEADERS);
  const res={
