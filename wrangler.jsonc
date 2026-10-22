@@ -10,9 +10,7 @@
       "/api/*"
     ]
   },
-  "vars": {
-    "KV_REST_API_URL": "https://singular-moth-70968.upstash.io"
-  },
+  "keep_vars": true,
   "observability": {
     "enabled": true
   },
