@@ -15,16 +15,16 @@ test('Cloudflare Redis health uses Worker secret bindings, not process.env',asyn
   };
   const response=await serveApi(new Request('https://fambo.dadda-3ettaa.workers.dev/api/agent/redis-health'),env);
   assert.equal(response.status,200);
-  assert.deepEqual(await response.json(),{available:true});
+  assert.deepEqual(await response.json(),{available:true,reason:'ok'});
   assert.equal(called,true);
-  assert.equal(response.headers.get('Cache-Control'),'public, s-maxage=300, stale-while-revalidate=60');
+  assert.equal(response.headers.get('Cache-Control'),'private, no-store');
  }finally{globalThis.fetch=prior}
 });
 
 test('Cloudflare Redis health fails closed without Worker secrets',async()=>{
  const response=await serveApi(new Request('https://fambo.dadda-3ettaa.workers.dev/api/agent/redis-health'),{});
  assert.equal(response.status,503);
- assert.deepEqual(await response.json(),{available:false});
+ assert.deepEqual(await response.json(),{available:false,reason:'configuration'});
 });
 
 test('Cloudflare browser status is disabled without signed, rate-limited configuration',async()=>{
