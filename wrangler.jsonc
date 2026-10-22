@@ -4,7 +4,7 @@
   "main": "cloudflare/worker.js",
   "compatibility_date": "2026-10-21",
   "assets": {
-    "directory": "./dist",
+    "directory": "./cloudflare/public",
     "binding": "ASSETS",
     "run_worker_first": [
       "/api/*"
@@ -15,8 +15,5 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ],
-  "build": {
-    "command": "npm run build"
-  }
+  ]
 }
