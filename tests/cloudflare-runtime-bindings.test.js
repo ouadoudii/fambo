@@ -17,7 +17,7 @@ test('Cloudflare Redis health uses Worker secret bindings, not process.env',asyn
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{available:true});
   assert.equal(called,true);
-  assert.equal(response.headers.get('Cache-Control').includes('maxage'),false);
+  assert.equal(response.headers.get('Cache-Control'),'public, s-maxage=300, stale-while-revalidate=60');
  }finally{globalThis.fetch=prior}
 });
 
