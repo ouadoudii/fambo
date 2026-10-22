@@ -24,7 +24,7 @@ test('Cloudflare Redis health uses Worker secret bindings, not process.env',asyn
 test('Cloudflare Redis health fails closed without Worker secrets',async()=>{
  const response=await serveApi(new Request('https://fambo.dadda-3ettaa.workers.dev/api/agent/redis-health'),{});
  assert.equal(response.status,503);
- assert.deepEqual(await response.json(),{available:false,reason:'configuration'});
+ assert.deepEqual(await response.json(),{available:false,reason:'missing_url'});
 });
 
 test('Cloudflare browser status is disabled without signed, rate-limited configuration',async()=>{
