@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {serveApi} from '../netlify/functions/api.mjs';
@@ -36,4 +37,11 @@ test('Cloudflare browser status is disabled without signed, rate-limited configu
  });
  assert.equal(response.status,200);
  assert.deepEqual(await response.json(),{available:false});
+});
+
+test('Cloudflare deploy keeps dashboard bindings without committing Redis URL or credentials',()=>{
+ const config=JSON.parse(readFileSync(new URL('../wrangler.jsonc',import.meta.url),'utf8'));
+ assert.equal(config.keep_vars,true);
+ assert.equal('vars' in config,false);
+ assert.equal(JSON.stringify(config).includes('.upstash.io'),false);
 });

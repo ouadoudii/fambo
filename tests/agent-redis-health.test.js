@@ -10,6 +10,7 @@ test('Redis health only issues read-only PING and never consumes budget',async()
   requests++;
   assert.equal(url,'https://my-cluster.upstash.io/ping');
   assert.equal(opts.method,undefined);
+  assert.equal(opts.redirect,'manual');
   assert.equal(opts.headers.Authorization,'Bearer test-token-123456');
   return new Response(JSON.stringify({result:'PONG'}));
  }});
@@ -78,4 +79,12 @@ test('Cloudflare fetch rejects with safe type error category',async()=>{
  const result=await diagnoseAgentRedis({env,fetcher:async()=>{throw new TypeError('must not disclose upstream credentials')}});
  assert.deepEqual(result,{available:false,reason:'fetch_type_error'});
  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
+});
+
+test('Redis redirects never follow or forward bearer credentials',async()=>{
+ const result=await diagnoseAgentRedis({env,fetcher:async(_url,opts)=>{
+  assert.equal(opts.redirect,'manual');
+  return new Response('',{status:302,headers:{Location:'https://untrusted.example/'}});
+ }});
+ assert.deepEqual(result,{available:false,reason:'upstream_redirect'});
 });
