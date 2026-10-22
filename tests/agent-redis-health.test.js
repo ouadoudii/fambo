@@ -73,3 +73,9 @@ test('network diagnoses timeout and malformed upstream response separately',asyn
  assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>new Response('not json')}),{available:false,reason:'invalid_response'});
  assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw new Error('secret')}}),{available:false,reason:'connection'});
 });
+
+test('Cloudflare fetch rejects with safe type error category',async()=>{
+ const result=await diagnoseAgentRedis({env,fetcher:async()=>{throw new TypeError('must not disclose upstream credentials')}});
+ assert.deepEqual(result,{available:false,reason:'fetch_type_error'});
+ assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
+});
