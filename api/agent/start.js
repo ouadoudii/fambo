@@ -17,20 +17,21 @@ export default async function handler(req,res){
  if(req.method!=='POST')return res.status(405).json({error:'Methode nicht erlaubt'});
  const origin=expectedOrigin(req);
  if(!origin||req.headers?.origin!==origin||!String(req.headers?.['content-type']||'').startsWith('application/json'))return res.status(403).json({error:'Anfrage nicht erlaubt'});
- if(!agentLaunchAllowed())return res.status(503).json({error:'Browser-Anmeldung ist noch nicht freigeschaltet.'});
+ const env=req.runtimeEnv||process.env;
+ if(!agentLaunchAllowed(env))return res.status(503).json({error:'Browser-Anmeldung ist noch nicht freigeschaltet.'});
  let device=cookieValue(req,COOKIE);
  if(!VALID.test(device))device=newDevice();
- const reserved=await reserveBrowserBudget({deviceId:device});
+ const reserved=await reserveBrowserBudget({deviceId:device,env});
  if(!reserved)return res.status(429).json({error:'Browser momentan nicht verfügbar. Bitte später erneut versuchen.'});
  let session;
  try{
-  session=await startCloudBrowser();
-  const ticket=createSessionTicket({sessionId:session.sessionId,deviceId:device,secret:process.env.FAMBO_AGENT_SIGNING_KEY});
+  session=await startCloudBrowser({env});
+  const ticket=createSessionTicket({sessionId:session.sessionId,deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
   res.setHeader('Set-Cookie',[deviceCookie(device),ticketCookie(ticket)]);
   return res.status(201).json({status:'created'});
  }catch{
   // Reservation remains consumed to prevent unlimited retries when upstream fails.
-  if(session?.sessionId)try{await releaseCloudBrowser(session.sessionId)}catch{}
+  if(session?.sessionId)try{await releaseCloudBrowser(session.sessionId,{env})}catch{}
   return res.status(502).json({error:'Browser konnte nicht gestartet werden.'});
  }
 }

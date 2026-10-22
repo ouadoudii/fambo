@@ -11,16 +11,17 @@ export default async function handler(req,res){
  if(req.method==='DELETE'&&req.headers?.origin!==origin)return res.status(403).json({error:'Anfrage nicht erlaubt'});
  const device=cookieValue(req,'__Host-fambo_device');
  const ticket=cookieValue(req,'__Host-fambo_browser');
- if(!process.env.FAMBO_AGENT_SIGNING_KEY)return res.status(503).json({error:'Agent noch nicht eingerichtet'});
- const session=verifySessionTicket(ticket,{deviceId:device,secret:process.env.FAMBO_AGENT_SIGNING_KEY});
+ const env=req.runtimeEnv||process.env;
+ if(!env.FAMBO_AGENT_SIGNING_KEY)return res.status(503).json({error:'Agent noch nicht eingerichtet'});
+ const session=verifySessionTicket(ticket,{deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
  if(!session)return res.status(401).json({error:'Keine gültige Browser-Sitzung auf diesem Gerät.'});
  try{
   if(req.method==='DELETE'){
-   await releaseCloudBrowser(session.sessionId);
+   await releaseCloudBrowser(session.sessionId,{env});
    res.setHeader('Set-Cookie',clearTicketCookie());
    return res.status(200).json({closed:true});
   }
-  const viewer=await getCloudViewer(session.sessionId);
+  const viewer=await getCloudViewer(session.sessionId,{env});
   return res.status(200).json({viewer,expiresAt:session.expiresAt});
  }catch{return res.status(502).json({error:'Browser-Sitzung momentan nicht erreichbar.'})}
 }
