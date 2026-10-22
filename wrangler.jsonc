@@ -1,14 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "fambo-family",
+  "name": "fambo",
   "main": "cloudflare/worker.js",
   "compatibility_date": "2026-10-21",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*"
+    ]
   },
   "observability": {
     "enabled": true
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "build": {
+    "command": "npm run build"
   }
 }
