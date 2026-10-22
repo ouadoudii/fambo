@@ -39,7 +39,7 @@ test('HTTP health never discloses Redis credentials',async()=>{
 
 test('diagnostic reasons are safe, deterministic and exclude secrets',async()=>{
  const cases=[
-  [{},'configuration'],
+  [{},'missing_url'],
   [env,'authentication',401],
   [env,'authentication',403],
   [env,'upstream',500],
@@ -52,4 +52,18 @@ test('diagnostic reasons are safe, deterministic and exclude secrets',async()=>{
   assert.equal(JSON.stringify(result).includes(env.KV_REST_API_URL),false);
  }
  assert.deepEqual(await diagnoseAgentRedis({env,fetcher:async()=>{throw Error('secret info')}}),{available:false,reason:'network'});
+});
+
+test('diagnoses missing or malformed Redis bindings without disclosing their values',async()=>{
+ const variants=[
+  [{KV_REST_API_URL:env.KV_REST_API_URL},'missing_token'],
+  [{KV_REST_API_URL:env.KV_REST_API_URL,KV_REST_API_TOKEN:'short'},'invalid_token'],
+  [{KV_REST_API_URL:'redis://localhost:6379',KV_REST_API_TOKEN:env.KV_REST_API_TOKEN},'invalid_url'],
+  [{KV_REST_API_URL:' '+env.KV_REST_API_URL+' ',KV_REST_API_TOKEN:' '+env.KV_REST_API_TOKEN+' '},'ok']
+ ];
+ for(const [settings,reason] of variants){
+  const result=await diagnoseAgentRedis({env:settings,fetcher:async()=>new Response(JSON.stringify({result:'PONG'}))});
+  assert.equal(result.reason,reason);
+  assert.equal(JSON.stringify(result).includes(env.KV_REST_API_TOKEN),false);
+ }
 });
