@@ -33,3 +33,15 @@ test('release requires validated ID and closes only selected session',async()=>{
  await releaseNativeBrowser(id,{env});
  assert.deepEqual(calls,[['close',id]]);
 });
+
+test('failed initial WebUntis tab does not destroy an acquired session',async()=>{
+ const {env,calls}=makeEnv();
+ env.BROWSER.devtools.newTarget=async()=>{throw Error('tab navigation unavailable')};
+ assert.deepEqual(await startNativeBrowser({env}),{sessionId:id});
+ assert.equal(calls.some(x=>x[0]==='close'),false);
+});
+test('failed browser acquisition still propagates rather than claiming success',async()=>{
+ const {env}=makeEnv();
+ env.BROWSER.acquire=async()=>{throw Object.assign(Error('quota exhausted'),{status:429})};
+ await assert.rejects(startNativeBrowser({env}),/quota exhausted/);
+});
