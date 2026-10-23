@@ -1,3 +1,4 @@
+import {getNativeViewer,releaseNativeBrowser} from '../../lib/cloudflare-native-browser.js';
 import {cookieValue,verifySessionTicket,clearTicketCookie} from '../../lib/agent-device.js';
 import {getCloudViewer,releaseCloudBrowser} from '../../lib/browserbase-sessions.js';
 import {expectedOrigin} from './start.js';
@@ -17,11 +18,11 @@ export default async function handler(req,res){
  if(!session)return res.status(401).json({error:'Keine gültige Browser-Sitzung auf diesem Gerät.'});
  try{
   if(req.method==='DELETE'){
-   await releaseCloudBrowser(session.sessionId,{env});
+   await (env.BROWSER?releaseNativeBrowser(session.sessionId,{env}):releaseCloudBrowser(session.sessionId,{env}));
    res.setHeader('Set-Cookie',clearTicketCookie());
    return res.status(200).json({closed:true});
   }
-  const viewer=await getCloudViewer(session.sessionId,{env});
+  const viewer=await (env.BROWSER?getNativeViewer(session.sessionId,{env}):getCloudViewer(session.sessionId,{env}));
   return res.status(200).json({viewer,expiresAt:session.expiresAt});
  }catch{return res.status(502).json({error:'Browser-Sitzung momentan nicht erreichbar.'})}
 }

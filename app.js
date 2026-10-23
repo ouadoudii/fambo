@@ -65,7 +65,7 @@ $('cloud-start').onclick=async()=>{
   await cloudRequest('/api/agent/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
   const session=await cloudRequest('/api/agent/session');
   const url=new URL(session.viewer);
-  if(url.protocol!=='https:'||!(url.hostname==='browserbase.com'||url.hostname.endsWith('.browserbase.com')))throw Error('Ungültige Browser-Adresse');
+  if(url.protocol!=='https:'||!(url.hostname==='live.browser.run'||url.hostname==='browserbase.com'||url.hostname.endsWith('.browserbase.com')))throw Error('Ungültige Browser-Adresse');
   cloudUrl=url.href;
   $('cloud-viewer').href=cloudUrl;
   $('cloud-viewer').hidden=false;
