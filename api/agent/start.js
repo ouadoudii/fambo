@@ -1,7 +1,7 @@
 import {agentLaunchAllowed} from '../../lib/agent-policy.js';
-import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,newDevice} from '../../lib/agent-device.js';
+import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,verifySessionTicket,newDevice} from '../../lib/agent-device.js';
 import {browserBudgetDecision} from '../../lib/agent-budget.js';
-import {startCloudBrowser,releaseCloudBrowser,BrowserbaseSessionError} from '../../lib/browserbase-sessions.js';
+import {startCloudBrowser,getCloudViewer,releaseCloudBrowser,BrowserbaseSessionError} from '../../lib/browserbase-sessions.js';
 const COOKIE='__Host-fambo_device';
 const VALID=/^[A-Za-z0-9_-]{43}$/;
 export function expectedOrigin(req){
@@ -21,6 +21,16 @@ export default async function handler(req,res){
  if(!agentLaunchAllowed(env))return res.status(503).json({error:'Browser-Anmeldung ist noch nicht freigeschaltet.'});
  let device=cookieValue(req,COOKIE);
  if(!VALID.test(device))device=newDevice();
+ // Reuse the device-bound active session before attempting another costly launch.
+ const existing=verifySessionTicket(cookieValue(req,'__Host-fambo_browser'),{deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
+ if(existing){
+  try{
+   await getCloudViewer(existing.sessionId,{env});
+   return res.status(200).json({status:'reused'});
+  }catch{
+   // Invalid upstream session is never trusted; normal quota rules still apply.
+  }
+ }
  const budget=await browserBudgetDecision({deviceId:device,env});
  if(!budget.allowed)return res.status(budget.reason==='budget_unavailable'?503:429).json({error:'Browser momentan nicht verfügbar.',reason:budget.reason});
  let session;
