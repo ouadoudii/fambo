@@ -16,3 +16,9 @@ test('Cloudflare supports node:crypto and process.env in the imported Fambo back
  assert.ok(config.compatibility_flags.includes('nodejs_compat'));
  assert.ok(config.compatibility_date >= '2025-04-01');
 });
+
+test('Cloudflare publishes the existing Worker on workers.dev without dashboard intervention',()=>{
+ assert.equal(config.workers_dev,true);
+ assert.equal(config.preview_urls,true);
+ assert.equal(config.name,'fambo');
+});
