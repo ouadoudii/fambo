@@ -86,6 +86,8 @@ $('cloud-start').onclick=async()=>{
    cloudflare_auth:'Cloudflare Browser Run ist für dieses Projekt nicht autorisiert.',
    cloudflare_binding:'Die Cloudflare-Browser-Anbindung ist nicht eingerichtet.',
    cloudflare_unavailable:'Cloudflare Browser Run ist derzeit nicht erreichbar.',
+   cloudflare_session_limit:'Cloudflare erlaubt derzeit keine weitere parallele Browser-Sitzung.',
+   cloudflare_session_invalid:'Cloudflare hat keine gültige Browser-Sitzung zurückgegeben. Browser-Dienst prüfen.',
    budget_busy:'Eine Sitzung ist noch reserviert. Bitte nach Ablauf der 15-Minuten-Sperre erneut versuchen.',
    daily_limit:'Das Tageslimit für Cloud-Browser wurde erreicht.',
    device_limit:'Das Tageslimit dieses Browsers wurde erreicht.',
