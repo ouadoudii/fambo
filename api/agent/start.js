@@ -1,7 +1,7 @@
 import {startNativeBrowser,getNativeViewer,releaseNativeBrowser,classifyNativeBrowserError} from '../../lib/cloudflare-native-browser.js';
 import {agentLaunchAllowed} from '../../lib/agent-policy.js';
 import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,verifySessionTicket,newDevice} from '../../lib/agent-device.js';
-import {browserBudgetDecision} from '../../lib/agent-budget.js';
+import {browserBudgetDecision,releaseBrowserReservation} from '../../lib/agent-budget.js';
 import {startCloudBrowser,getCloudViewer,releaseCloudBrowser,BrowserbaseSessionError} from '../../lib/browserbase-sessions.js';
 const COOKIE='__Host-fambo_device';
 const VALID=/^[A-Za-z0-9_-]{43}$/;
@@ -41,8 +41,9 @@ export default async function handler(req,res){
   res.setHeader('Set-Cookie',[deviceCookie(device),ticketCookie(ticket)]);
   return res.status(201).json({status:'created'});
  }catch(error){
-  // Reservation remains consumed to prevent unlimited retries when upstream fails.
+  // Only this request's lock may be released; daily counters remain consumed.
   if(session?.sessionId)try{await (env.BROWSER?releaseNativeBrowser(session.sessionId,{env}):releaseCloudBrowser(session.sessionId,{env}))}catch{}
+  await releaseBrowserReservation({reservation:budget.reservation,env});
   const reason=env.BROWSER?classifyNativeBrowserError(error):error instanceof BrowserbaseSessionError?error.reason:'session_setup_failed';
   return res.status(502).json({error:'Browser konnte nicht gestartet werden.',reason});
  }
