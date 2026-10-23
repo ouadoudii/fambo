@@ -8,6 +8,7 @@ import bbHealth from '../../api/browserbase-health.js';
 import agentStatus from '../../api/agent/status.js';
 import redisHealth from '../../api/agent/redis-health.js';
 import agentStart from '../../api/agent/start.js';
+import agentImport from '../../api/agent/import.js';
 import agentSession from '../../api/agent/session.js';
 
 const endpoints=new Map([
@@ -18,6 +19,7 @@ const endpoints=new Map([
  ['/api/agent/status',agentStatus],
  ['/api/agent/redis-health',redisHealth],
  ['/api/agent/start',agentStart],
+ ['/api/agent/import',agentImport],
  ['/api/agent/session',agentSession],
 ]);
 const JSON_HEADERS={'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'};

@@ -1,8 +1,8 @@
 import {mondayISO,parseUntisUrl} from './lib.js';
 const KEY='fambo.device.links.v1';
 const $=id=>document.getElementById(id);
-const defaultSlots=()=>[{name:'Kind 1',url:''},{name:'Kind 2',url:''}];
-const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url)parseUntisUrl(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
+const defaultSlots=()=>[{name:'Kind 1',url:'',lessons:[]},{name:'Kind 2',url:'',lessons:[]}];
+const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url)parseUntisUrl(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url,lessons:Array.isArray(x.lessons)?x.lessons.slice(0,200):[]}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
 let children=restore();
 let editing=0,revision=0;
 const current=new Date();
@@ -29,17 +29,17 @@ async function load(index,container,child,renderVersion){
  }
 }
 function render(){const version=++revision;$('week-label').textContent=dateShort(week)+' – '+dateShort(offset(week,6));$('schedules').replaceChildren();children.forEach((child,index)=>{
- const card=text('article','','schedule');const head=text('div','','schedule-head');head.append(text('span',index===0?'☀':'✿','avatar'));const title=text('div','');title.append(text('h2',child.url?child.name:'Stundenplan '+(index+1)),text('div',child.url?'WebUntis verbunden':'Noch nicht verbunden','small'));head.append(title);card.append(head);
+ const card=text('article','','schedule');const head=text('div','','schedule-head');head.append(text('span',index===0?'☀':'✿','avatar'));const title=text('div','');title.append(text('h2',child.url?child.name:'Stundenplan '+(index+1)),text('div',child.url?'WebUntis verbunden':child.lessons?.length?'Stundenplan übernommen':'Noch nicht verbunden','small'));head.append(title);card.append(head);
  const panel=text('div','','card-content');card.append(panel);
- if(!child.url){const empty=text('div','','connect-empty');empty.append(text('div','✺','connect-mark'),text('strong','Dein Stundenplan beginnt hier'),text('p','Verbinde WebUntis und sieh deinen Stundenplan direkt auf dieser Familienwand.'));const button=text('button','WebUntis verbinden','primary');button.onclick=()=>openEditor(index);empty.append(button);panel.append(empty)}
- else{panel.append(text('div','Stundenplan wird geladen …','state'));load(index,panel,child,version);const change=text('button','Verbindung verwalten','manage-link');change.onclick=()=>openEditor(index);card.append(change)}
+ if(!child.url&&!child.lessons?.length){const empty=text('div','','connect-empty');empty.append(text('div','✺','connect-mark'),text('strong','Dein Stundenplan beginnt hier'),text('p','Verbinde WebUntis und sieh deinen Stundenplan direkt auf dieser Familienwand.'));const button=text('button','WebUntis verbinden','primary');button.onclick=()=>openEditor(index);empty.append(button);panel.append(empty)}
+ else{if(child.url){panel.append(text('div','Stundenplan wird geladen …','state'));load(index,panel,child,version)}else showLessons(panel,child.lessons);const change=text('button','Verbindung verwalten','manage-link');change.onclick=()=>openEditor(index);card.append(change)}
  $('schedules').append(card);
 })}
 $('previous').onclick=()=>{week=offset(week,-7);render()};
 $('next').onclick=()=>{week=offset(week,7);render()};
 $('today').onclick=()=>{const d=new Date();week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));render()};
 $('close-dialog').onclick=()=>$('connection-dialog').close();
-$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');parseUntisUrl(url);children[editing]={name,url};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
+$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');parseUntisUrl(url);children[editing]={name,url,lessons:[]};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
 $('remove-connection').onclick=()=>{children[editing]=defaultSlots()[editing];save();$('connection-dialog').close();render()};
 
 let cloudUrl='';
@@ -70,6 +70,7 @@ $('cloud-start').onclick=async()=>{
   $('cloud-viewer').href=cloudUrl;
   $('cloud-viewer').hidden=false;
   $('cloud-stop').hidden=false;
+  $('cloud-import').hidden=false;
   cloudMessage('Browser bereit. Öffne ihn, wähle deine Schule und melde dich direkt bei WebUntis an.');
  }catch(err){
   const hints={
@@ -88,6 +89,7 @@ $('cloud-start').onclick=async()=>{
   const reason=Object.hasOwn(hints,err.reason)?hints[err.reason]:(err.message||'Browser konnte nicht gestartet werden.');
   $('cloud-viewer').hidden=true;
   $('cloud-stop').hidden=true;
+  $('cloud-import').hidden=true;
   cloudUrl='';
   await refreshCloud();
   cloudMessage(reason);
@@ -104,9 +106,23 @@ $('cloud-stop').onclick=async()=>{
   $('cloud-viewer').href='#';
   $('cloud-viewer').hidden=true;
   $('cloud-stop').hidden=true;
+  $('cloud-import').hidden=true;
   $('cloud-stop').disabled=false;
   await refreshCloud();
  }
+};
+$('cloud-import').onclick=async()=>{
+ const button=$('cloud-import');
+ button.disabled=true;
+ cloudMessage('Stundenplan wird aus der angemeldeten WebUntis-Seite gelesen …');
+ try{
+  const result=await cloudRequest('/api/agent/import',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  children[editing]={...children[editing],url:'',lessons:result.lessons};
+  save();
+  render();
+  cloudMessage(result.lessons.length+' Unterrichtseinträge übernommen. Die Daten bleiben nur in diesem Browser.');
+ }catch(error){cloudMessage(error.message||'Übernahme nicht möglich.')}
+ finally{button.disabled=false}
 };
 refreshCloud();
 
