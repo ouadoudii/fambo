@@ -32,9 +32,9 @@ test('Browserbase creation is opt-in server call, recorder and captcha solver di
  assert.equal(JSON.stringify(result).includes('secret'),false);
 });
 test('viewer link verified and malformed origins rejected',async()=>{
- const f=async()=>new Response(JSON.stringify({debuggerFullscreenUrl:'https://www.browserbase.com/debug/safe'}));
+ const f=async()=>new Response(JSON.stringify({debuggerUrl:'https://www.browserbase.com/debug/safe'}));
  assert.equal(await getCloudViewer(id,{env,fetcher:f}),'https://www.browserbase.com/debug/safe');
- await assert.rejects(getCloudViewer(id,{env,fetcher:async()=>new Response(JSON.stringify({debuggerFullscreenUrl:'https://browserbase.com.evil.test/steal'}))}),/Viewer/);
+ await assert.rejects(getCloudViewer(id,{env,fetcher:async()=>new Response(JSON.stringify({debuggerUrl:'https://browserbase.com.evil.test/steal'}))}),/Viewer/);
  await assert.rejects(getCloudViewer('not-a-session',{env,fetcher:f}),/Sitzung/);
 });
 test('release session sends only validated ID',async()=>{
