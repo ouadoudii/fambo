@@ -7,7 +7,8 @@ test('valid session is checked before any new Redis budget reservation',()=>{
  const existing=source.indexOf("const existing=verifySessionTicket(");
  const budget=source.indexOf("const budget=await browserBudgetDecision(");
  assert.ok(existing>0&&budget>existing);
- assert.match(source.slice(existing,budget),/await getCloudViewer\(existing\.sessionId,\{env\}\)/);
+ assert.match(source.slice(existing,budget),/getNativeViewer\(existing\.sessionId,\{env\}\)/);
+ assert.match(source.slice(existing,budget),/getCloudViewer\(existing\.sessionId,\{env\}\)/);
  assert.match(source.slice(existing,budget),/status:'reused'/);
 });
 test('device-bound ticket cannot be reused by another browser or after expiry',()=>{
