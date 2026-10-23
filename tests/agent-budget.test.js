@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {reserveBrowserBudget,browserBudgetDecision} from '../lib/agent-budget.js';
+import {reserveBrowserBudget,browserBudgetDecision,releaseBrowserReservation} from '../lib/agent-budget.js';
 import start,{expectedOrigin} from '../api/agent/start.js';
 const dev='x'.repeat(43);
 const env={UPSTASH_REDIS_REST_URL:'https://sample.upstash.io',UPSTASH_REDIS_REST_TOKEN:'test-only-token'};
@@ -51,7 +51,7 @@ test('Vercel Marketplace KV_REST_API_* credentials work without custom UPSTASH n
   assert.equal(url,'https://example.upstash.io/');
   assert.equal(options.headers.Authorization,'Bearer marketplace-test-token');
   const args=JSON.parse(options.body);
-  assert.ok(args[1].includes("if not redis.call('SET',active,'1','EX',lock,'NX') then return -1 end"));
+  assert.ok(args[1].includes("if not redis.call('SET',active,owner,'EX',lock,'NX') then return -1 end"));
   return new Response(JSON.stringify({result:1}));
  }});
  assert.equal(ok,true);assert.equal(requests,1);
@@ -71,14 +71,15 @@ test('atomic budget reasons distinguish busy, global cap, device cap and Redis o
  }
  assert.deepEqual(await browserBudgetDecision({deviceId:dev,env:{}}),{allowed:false,reason:'budget_unavailable'});
  assert.deepEqual(await browserBudgetDecision({deviceId:dev,env,fetcher:async()=>{throw Error('offline')}}),{allowed:false,reason:'budget_unavailable'});
- assert.deepEqual(await browserBudgetDecision({deviceId:dev,env,fetcher:async()=>Response.json({result:1})}),{allowed:true});
+ const allowed=await browserBudgetDecision({deviceId:dev,env,fetcher:async()=>Response.json({result:1})});
+ assert.equal(allowed.allowed,true);assert.match(allowed.reservation,/^[0-9a-f-]{36}$/);
 });
 
 test('Cloudflare-native sessions use separate atomic counters from Browserbase',async()=>{
  const cf={...env,BROWSER:{acquire:async()=>{}}};
  let args;
  const verdict=await browserBudgetDecision({deviceId:dev,env:cf,now:Date.UTC(2026,9,23),fetcher:async(_url,opts)=>{args=JSON.parse(opts.body);return Response.json({result:1})}});
- assert.deepEqual(verdict,{allowed:true});
+ assert.equal(verdict.allowed,true);assert.ok(verdict.reservation);
  assert.equal(args[3],'fambo:cf:daily:2026-10-23');
  assert.ok(args[4].startsWith(args[3]+':'));
  assert.equal(args[5],'fambo:cf:active');
@@ -91,4 +92,15 @@ test('bounded retry budget permits up to three device attempts and six globally'
  assert.equal(args[6],'6');
  assert.ok(args[1].includes("redis.call('GET',device) or '0')>=3"));
  assert.match(args[1],/if redis.call\('EXISTS',active\)==1 then return -1/);
+});
+
+test('failed launch only releases matching active lock, not daily counters',async()=>{
+ const reservation='123e4567-e89b-42d3-a456-426614174000';
+ let args;
+ assert.equal(await releaseBrowserReservation({reservation,env,fetcher:async(_url,opts)=>{args=JSON.parse(opts.body);return Response.json({result:1})}}),true);
+ assert.equal(args[0],'EVAL');assert.equal(args[2],'1');assert.equal(args[3],'fambo:bb:active');assert.equal(args[4],reservation);
+ assert.ok(args[1].includes("redis.call('GET',KEYS[1])==ARGV[1]"));
+ assert.ok(args[1].includes("redis.call('DEL',KEYS[1])"));
+ assert.equal(await releaseBrowserReservation({reservation,env,fetcher:async()=>Response.json({result:0})}),false);
+ assert.equal(await releaseBrowserReservation({reservation:'invalid',env,fetcher:async()=>{throw Error('unexpected')}}),false);
 });
