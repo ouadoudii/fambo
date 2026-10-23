@@ -12,6 +12,7 @@ test('atomic limiter is one Redis Lua request with shared global lock and privac
  assert.equal(seen.url,'https://sample.upstash.io/');
  const args=JSON.parse(seen.opts.body);
  assert.equal(args[0],'EVAL');assert.equal(args[2],'3');
+ assert.equal(args[6],'6');
  assert.equal(args[3],'fambo:bb:daily:2026-10-21');
  assert.ok(args[4].startsWith(args[3]+':'));
  assert.equal(args[4].includes(dev),false);
@@ -82,4 +83,12 @@ test('Cloudflare-native sessions use separate atomic counters from Browserbase',
  assert.ok(args[4].startsWith(args[3]+':'));
  assert.equal(args[5],'fambo:cf:active');
  assert.equal(args[2],'3');
+});
+
+test('bounded retry budget permits up to three device attempts and six globally',async()=>{
+ let args;
+ await browserBudgetDecision({deviceId:dev,env,fetcher:async(_url,options)=>{args=JSON.parse(options.body);return Response.json({result:1})}});
+ assert.equal(args[6],'6');
+ assert.match(args[1],/GET',device\) or '0'\)>=3/);
+ assert.match(args[1],/if redis.call\('EXISTS',active\)==1 then return -1/);
 });
