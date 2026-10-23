@@ -48,3 +48,29 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy:cloudflare
+
+  verify-cloudflare-live:
+    name: Verify Cloudflare live after deploy
+    needs: deploy-cloudflare
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public Worker and safe API responses
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://fambo.dadda-3ettaa.workers.dev"
+          # DNS/CDN propagation can lag a deploy; retry only read-only GET requests.
+          for i in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location --connect-timeout 6 --max-time 15 "$base/" -o /tmp/fambo-index.html &&
+               grep -qi 'Fambo' /tmp/fambo-index.html &&
+               curl --fail --silent --show-error --connect-timeout 6 --max-time 15 "$base/api/agent/status" -o /tmp/fambo-agent-status.json &&
+               python3 -c 'import json; o=json.load(open("/tmp/fambo-agent-status.json")); assert isinstance(o.get("available"), bool)'; then
+              echo "Cloudflare live: HTML and safe API health verified."
+              exit 0
+            fi
+            echo "Cloudflare live check attempt $i/6 did not pass."
+            sleep 10
+          done
+          echo "::error::Cloudflare production URL not reachable or API response invalid"
+          exit 1
