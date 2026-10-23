@@ -89,6 +89,6 @@ test('bounded retry budget permits up to three device attempts and six globally'
  let args;
  await browserBudgetDecision({deviceId:dev,env,fetcher:async(_url,options)=>{args=JSON.parse(options.body);return Response.json({result:1})}});
  assert.equal(args[6],'6');
- assert.match(args[1],/GET',device\) or '0'\)>=3/);
+ assert.ok(args[1].includes("redis.call('GET',device) or '0')>=3"));
  assert.match(args[1],/if redis.call\('EXISTS',active\)==1 then return -1/);
 });
