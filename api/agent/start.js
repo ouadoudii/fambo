@@ -1,3 +1,4 @@
+import {startNativeBrowser,getNativeViewer,releaseNativeBrowser} from '../../lib/cloudflare-native-browser.js';
 import {agentLaunchAllowed} from '../../lib/agent-policy.js';
 import {cookieValue,deviceCookie,ticketCookie,createSessionTicket,verifySessionTicket,newDevice} from '../../lib/agent-device.js';
 import {browserBudgetDecision} from '../../lib/agent-budget.js';
@@ -25,7 +26,7 @@ export default async function handler(req,res){
  const existing=verifySessionTicket(cookieValue(req,'__Host-fambo_browser'),{deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
  if(existing){
   try{
-   await getCloudViewer(existing.sessionId,{env});
+   await (env.BROWSER?getNativeViewer(existing.sessionId,{env}):getCloudViewer(existing.sessionId,{env}));
    return res.status(200).json({status:'reused'});
   }catch{
    // Invalid upstream session is never trusted; normal quota rules still apply.
@@ -35,13 +36,13 @@ export default async function handler(req,res){
  if(!budget.allowed)return res.status(budget.reason==='budget_unavailable'?503:429).json({error:'Browser momentan nicht verfügbar.',reason:budget.reason});
  let session;
  try{
-  session=await startCloudBrowser({env});
+  session=await (env.BROWSER?startNativeBrowser({env}):startCloudBrowser({env}));
   const ticket=createSessionTicket({sessionId:session.sessionId,deviceId:device,secret:env.FAMBO_AGENT_SIGNING_KEY});
   res.setHeader('Set-Cookie',[deviceCookie(device),ticketCookie(ticket)]);
   return res.status(201).json({status:'created'});
  }catch(error){
   // Reservation remains consumed to prevent unlimited retries when upstream fails.
-  if(session?.sessionId)try{await releaseCloudBrowser(session.sessionId,{env})}catch{}
+  if(session?.sessionId)try{await (env.BROWSER?releaseNativeBrowser(session.sessionId,{env}):releaseCloudBrowser(session.sessionId,{env}))}catch{}
   const reason=error instanceof BrowserbaseSessionError?error.reason:'session_setup_failed';
   return res.status(502).json({error:'Browser konnte nicht gestartet werden.',reason});
  }
