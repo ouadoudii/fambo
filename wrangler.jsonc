@@ -19,5 +19,7 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "workers_dev": true,
+  "preview_urls": true
 }
