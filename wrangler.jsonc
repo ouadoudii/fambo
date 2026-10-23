@@ -10,7 +10,9 @@
       "/api/*"
     ]
   },
-  "browser": {"binding": "BROWSER"},
+  "browser": {
+    "binding": "BROWSER"
+  },
   "keep_vars": true,
   "observability": {
     "enabled": true
