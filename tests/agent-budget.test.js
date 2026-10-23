@@ -72,3 +72,14 @@ test('atomic budget reasons distinguish busy, global cap, device cap and Redis o
  assert.deepEqual(await browserBudgetDecision({deviceId:dev,env,fetcher:async()=>{throw Error('offline')}}),{allowed:false,reason:'budget_unavailable'});
  assert.deepEqual(await browserBudgetDecision({deviceId:dev,env,fetcher:async()=>Response.json({result:1})}),{allowed:true});
 });
+
+test('Cloudflare-native sessions use separate atomic counters from Browserbase',async()=>{
+ const cf={...env,BROWSER:{acquire:async()=>{}}};
+ let args;
+ const verdict=await browserBudgetDecision({deviceId:dev,env:cf,now:Date.UTC(2026,9,23),fetcher:async(_url,opts)=>{args=JSON.parse(opts.body);return Response.json({result:1})}});
+ assert.deepEqual(verdict,{allowed:true});
+ assert.equal(args[3],'fambo:cf:daily:2026-10-23');
+ assert.ok(args[4].startsWith(args[3]+':'));
+ assert.equal(args[5],'fambo:cf:active');
+ assert.equal(args[2],'3');
+});
