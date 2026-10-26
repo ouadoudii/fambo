@@ -3,6 +3,8 @@ const button=document.getElementById('calendar-connect');
 const stop=document.getElementById('calendar-disconnect');
 const status=document.getElementById('calendar-status');
 const eventsRoot=document.getElementById('calendar-events');
+const choicesRoot=document.getElementById('calendar-choices');
+let availableCalendars=[], chosenCalendarIds=new Set();
 let accessToken=null, tokenClient=null, generation=0;
 const tell=message=>{status.textContent=message};
 const script=()=>new Promise((resolve,reject)=>{
@@ -32,13 +34,36 @@ function showEvents(items){
   row.append(when,title);eventsRoot.append(row);
  }
 }
-async function loadEvents(token){
+function showChoices(){
+ choicesRoot.replaceChildren();
+ for(const calendar of availableCalendars){
+  const label=document.createElement('label');label.className='calendar-choice';
+  const check=document.createElement('input');check.type='checkbox';check.checked=chosenCalendarIds.has(calendar.id);
+  check.setAttribute('aria-label',String(calendar.summary||calendar.id));
+  check.addEventListener('change',()=>{
+   if(check.checked)chosenCalendarIds.add(calendar.id);else chosenCalendarIds.delete(calendar.id);
+   if(accessToken)loadEvents(accessToken,false);
+  });
+  const name=document.createElement('span');name.textContent=String(calendar.summary||calendar.id).slice(0,120);
+  label.append(check,name);choicesRoot.append(label);
+ }
+ choicesRoot.hidden=false;
+}
+async function loadEvents(token,refreshList=true){
  const version=++generation;
  tell('Private Termine werden geladen …');
  try{
-  const calendars=await googleGet('users/me/calendarList?minAccessRole=reader&maxResults=100',token);
+  if(refreshList){
+   const calendars=await googleGet('users/me/calendarList?minAccessRole=reader&maxResults=100',token);
+   if(version!==generation)return;
+   availableCalendars=(calendars.items||[]).filter(x=>typeof x.id==='string').slice(0,100);
+   const currentIds=new Set(availableCalendars.map(c=>c.id));
+   if(!chosenCalendarIds.size&&choicesRoot.hidden){chosenCalendarIds=new Set(availableCalendars.filter(c=>c.selected!==false&&c.hidden!==true).map(c=>c.id));}
+   else chosenCalendarIds=new Set([...chosenCalendarIds].filter(id=>currentIds.has(id)));
+   showChoices();
+  }
   const now=new Date(),end=new Date(now.getTime()+14*86400000);
-  const selected=(calendars.items||[]).filter(x=>x.selected!==false&&x.hidden!==true).slice(0,10);
+  const selected=availableCalendars.filter(x=>chosenCalendarIds.has(x.id));
   const lists=await Promise.all(selected.map(async calendar=>{
    const params=new URLSearchParams({timeMin:now.toISOString(),timeMax:end.toISOString(),singleEvents:'true',orderBy:'startTime',maxResults:'100'});
    return googleGet('calendars/'+encodeURIComponent(calendar.id)+'/events?'+params,token);
@@ -79,5 +104,5 @@ stop?.addEventListener('click',()=>{
  generation++;
  if(accessToken&&window.google?.accounts?.oauth2)google.accounts.oauth2.revoke(accessToken,()=>{});
  accessToken=null;tokenClient=null;
- eventsRoot.replaceChildren();stop.hidden=true;button.textContent='Google-Kalender verbinden';button.disabled=false;tell('Kalender auf diesem Gerät getrennt.');
+ eventsRoot.replaceChildren();choicesRoot.replaceChildren();choicesRoot.hidden=true;availableCalendars=[];chosenCalendarIds.clear();stop.hidden=true;button.textContent='Google-Kalender verbinden';button.disabled=false;tell('Kalender auf diesem Gerät getrennt.');
 });
