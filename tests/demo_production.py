@@ -25,7 +25,7 @@ class Production(unittest.TestCase):
   with urlopen(BASE+'/api/agent/redis-health',timeout=20) as response:
    self.assertEqual(response.status,200)
    data=json.loads(response.read().decode('utf8'))
-  self.assertEqual(data,{'available':True})
+  self.assertEqual(data,{'available':True,'reason':'ok'})
  def test_browserbase_server_connection(self):
   # Production-only credentials; must be a read-only probe without browser creation.
   import json
@@ -33,5 +33,5 @@ class Production(unittest.TestCase):
   with urlopen(BASE+'/api/browserbase-health',timeout=20) as response:
    self.assertEqual(response.status,200)
    data=json.loads(response.read().decode('utf8'))
-  self.assertEqual(data,{'available':True})
+  self.assertEqual(data,{'available':True,'reason':'ok'})
 if __name__=='__main__':unittest.main()
