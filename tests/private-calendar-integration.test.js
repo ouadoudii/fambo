@@ -41,3 +41,13 @@ test('build ships calendar module and API is allowlisted',()=>{
  assert.match(read('../netlify/functions/api.mjs'),/\/api\/calendar\/config/);
  assert.match(read('../package.json'),/node --check calendar\.js/);
 });
+
+test('calendar selection is explicit and remains private to active memory session',()=>{
+ const html=read('../index.html');const source=read('../calendar.js');
+ assert.match(html,/id="calendar-choices"/);
+ assert.match(source,/chosenCalendarIds=new Set/);
+ assert.match(source,/check\.addEventListener\('change'/);
+ assert.match(source,/availableCalendars\.filter\(x=>chosenCalendarIds\.has\(x\.id\)\)/);
+ assert.match(source,/choicesRoot\.hidden=true/);
+ assert.doesNotMatch(source,/localStorage|sessionStorage|document\.cookie/);
+});
