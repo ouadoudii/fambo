@@ -60,7 +60,7 @@ button?.addEventListener('click',async()=>{
   const res=await fetch('/api/calendar/config',{cache:'no-store'});
   if(!res.ok)throw Error('Google-Anbindung ist in Fambo noch nicht eingerichtet.');
   const {clientId}=await res.json();
-  if(!/^\\d+-[a-z0-9_-]+\\.apps\\.googleusercontent\\.com$/.test(clientId))throw Error('Google-Konfiguration ungültig.');
+  if(!/^\d+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/.test(clientId))throw Error('Google-Konfiguration ungültig.');
   await script();
   tokenClient=google.accounts.oauth2.initTokenClient({
    client_id:clientId,scope:'https://www.googleapis.com/auth/calendar.readonly',
