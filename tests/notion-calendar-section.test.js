@@ -11,9 +11,11 @@ test('family calendar is below student schedules and before footer',()=>{
  assert.ok(page.indexOf('class="family-calendar"')<page.indexOf('<footer>'));
  assert.match(page,/aria-labelledby="family-calendar-heading"/);
 });
-test('Notion Calendar opens securely, without pretending to sync private events',()=>{
+test('Notion Calendar link remains secure while private events require OAuth',()=>{
  assert.match(page,/href="https:\/\/calendar\.notion\.so\/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"/);
- assert.match(page,/Noch keine Freigabe für die Anzeige innerhalb von Fambo/);
+ assert.match(page,/id="calendar-connect"/);
+ assert.match(page,/id="calendar-events"/);
+ assert.match(page,/Deine Kalender bleiben privat/);
  assert.doesNotMatch(page,/<iframe/i);
  assert.equal(page,publicPage);
 });

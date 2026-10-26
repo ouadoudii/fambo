@@ -140,4 +140,37 @@ class ConnectFlows(unittest.TestCase):
   page.get_by_text('Cloud-Browser momentan noch nicht verfügbar.').wait_for()
   self.assertFalse(page.get_by_role('button',name='Geschützten Browser öffnen').is_enabled())
   page.close()
+ def test_private_google_calendar_is_visible_and_disconnects_on_mobile_and_desktop(self):
+  for width,height in [(1440,900),(390,844)]:
+   with self.subTest(width=width):
+    context=self.browser.new_context(viewport={'width':width,'height':height})
+    page=context.new_page()
+    def route(r):
+     u=r.request.url
+     if u.endswith('/api/calendar/config'):
+      return r.fulfill(status=200,content_type='application/json',body='{"clientId":"123456-demo.apps.googleusercontent.com"}')
+     if u.startswith('https://accounts.google.com/gsi/client'):
+      return r.fulfill(status=200,content_type='text/javascript',body="""window.google={accounts:{oauth2:{initTokenClient:()=>({requestAccessToken:()=>window.googleCallback({access_token:'test-short-token'})}),revoke:(_,cb)=>cb()}}};Object.defineProperty(window.google.accounts.oauth2,'initTokenClient',{value:(opts)=>{window.googleCallback=opts.callback;return {requestAccessToken:()=>opts.callback({access_token:'test-short-token'})}}});""")
+     if '/calendar/v3/users/me/calendarList' in u:
+      self.assertEqual(r.request.headers.get('authorization'),'Bearer test-short-token')
+      return r.fulfill(status=200,content_type='application/json',body='{"items":[{"id":"primary","selected":true}]}')
+     if '/calendar/v3/calendars/primary/events' in u:
+      self.assertEqual(r.request.headers.get('authorization'),'Bearer test-short-token')
+      return r.fulfill(status=200,content_type='application/json',body='{"items":[{"id":"one","summary":"Familienausflug","start":{"dateTime":"2026-10-27T09:00:00+01:00"}}]}')
+     if u.endswith('/api/agent/status'):
+      return r.fulfill(status=200,content_type='application/json',body='{"available":false}')
+     if u.startswith('https://family.test'):
+      name=u.split('?')[0].split('/')[-1] or 'index.html'
+      if name in ('index.html','app.js','calendar.js','styles.css','lib.js'):
+       return r.fulfill(status=200,content_type={'html':'text/html','js':'text/javascript','css':'text/css'}[name.split('.')[-1]],body=(ROOT/name).read_bytes())
+     return r.abort()
+    page.route('**/*',route);page.goto('https://family.test/')
+    page.get_by_role('button',name='Google-Kalender verbinden').click()
+    page.get_by_text('Familienausflug').wait_for()
+    self.assertIn('Kalender verbunden',page.locator('#calendar-status').inner_text())
+    self.assertNotIn('test-short-token',page.evaluate("JSON.stringify(localStorage)"))
+    self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
+    page.get_by_role('button',name='Kalender trennen').click()
+    self.assertEqual(page.get_by_text('Familienausflug').count(),0)
+    context.close()
 if __name__=='__main__':unittest.main()

@@ -15,7 +15,7 @@
 <section class="schedules" id="schedules" aria-label="Stundenpläne"></section>
 <section class="family-calendar" aria-labelledby="family-calendar-heading">
   <div class="family-calendar-heading"><div><div class="eyebrow">FAMILIE & TERMINE</div><h2 id="family-calendar-heading">Unser Kalender <span aria-hidden="true">✿</span></h2></div><a class="calendar-open" href="https://calendar.notion.so/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Notion Calendar öffnen ↗</a></div>
-  <div class="family-calendar-body"><div class="calendar-symbol" aria-hidden="true">▦</div><div><strong>Alle Familientermine an einem Ort</strong><p>Deine Google-Kalender sind bereits mit Notion Calendar verbunden. Öffne deinen privaten Kalender, um deine Termine zu sehen.</p><p class="calendar-privacy">Noch keine Freigabe für die Anzeige innerhalb von Fambo. Deine privaten Termine werden hier nicht öffentlich eingeblendet.</p></div></div>
+  <div class="family-calendar-body"><div class="calendar-symbol" aria-hidden="true">▦</div><div><strong>Deine Termine direkt in Fambo</strong><p>Verbinde dein Google-Konto, das du auch in Notion Calendar verwendest. Deine Kalender bleiben privat.</p><button type="button" id="calendar-connect" class="calendar-open">Google-Kalender verbinden</button><button type="button" id="calendar-disconnect" class="manage-link" hidden>Kalender trennen</button><p id="calendar-status" class="calendar-privacy" role="status" aria-live="polite">Noch nicht verbunden.</p></div></div><div id="calendar-events" class="calendar-events" aria-label="Anstehende Familientermine"></div>
 </section>
 <footer><span>Mit Liebe organisiert ♡</span><span>Keine Anmeldung · kein gemeinsamer Familienbereich</span></footer>
 </main>
@@ -46,5 +46,5 @@
 <button id="remove-connection" type="button" class="disconnect" hidden>Verbindung auf diesem Gerät entfernen</button>
 </form>
 </dialog>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js"></script><script type="module" src="calendar.js"></script>
 </body></html>

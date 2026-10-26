@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 const root=new URL('../',import.meta.url);
-const expected=['app.js','index.html','lib.js','styles.css'];
-test('Cloudflare default deployment assets are exactly the four intended public files',()=>{
+const expected=['app.js','calendar.js','index.html','lib.js','styles.css'];
+test('Cloudflare default deployment assets are exactly the five intended public files',()=>{
  const files=readdirSync(new URL('../cloudflare/public/',import.meta.url)).sort();
  assert.deepEqual(files,expected);
 });
