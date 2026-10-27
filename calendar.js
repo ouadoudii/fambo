@@ -18,7 +18,20 @@ const script=()=>new Promise((resolve,reject)=>{
 async function googleGet(path,token){
  const response=await fetch('https://www.googleapis.com/calendar/v3/'+path,{
   headers:{Authorization:'Bearer '+token},cache:'no-store'});
- if(!response.ok)throw Error(response.status===401?'Google-Sitzung abgelaufen. Bitte erneut verbinden.':'Kalender konnten nicht geladen werden.');
+ if(!response.ok){
+  // Google returns a JSON error with a documented status/reason. Never expose raw
+  // responses, event details or authorization headers to the UI.
+  const payload=await response.json().catch(()=>({}));
+  const reason=payload?.error?.errors?.[0]?.reason||payload?.error?.status||'';
+  const code=response.status;
+  if(code===401)throw Error('Google-Sitzung abgelaufen. Bitte Kalender trennen und erneut verbinden.');
+  if(code===403&&(/accessNotConfigured|SERVICE_DISABLED/i.test(reason)))throw Error('Google Calendar API ist im Google-Cloud-Projekt nicht aktiviert.');
+  if(code===403&&(/insufficientPermissions|ACCESS_TOKEN_SCOPE_INSUFFICIENT|forbidden/i.test(reason)))throw Error('Google erlaubt keinen Kalenderzugriff. Bitte Kalender trennen und die Leseberechtigung erneut erteilen.');
+  if(code===403)throw Error('Google verweigert den Kalenderzugriff (403). Bitte Google Calendar API und Berechtigungen prüfen.');
+  if(code===404)throw Error('Google-Kalender nicht gefunden oder nicht mehr freigegeben (404).');
+  if(code===429)throw Error('Google-Anfragelimit erreicht. Bitte später erneut versuchen.');
+  throw Error('Google-Kalender konnten nicht geladen werden (HTTP '+code+').');
+ }
  return response.json();
 }
 function showEvents(items){
