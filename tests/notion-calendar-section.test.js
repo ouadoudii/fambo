@@ -24,3 +24,13 @@ test('mobile calendar navigation remains accessible',()=>{
  assert.match(css,/\.calendar-open:focus-visible/);
  assert.match(css,/min-height:44px/);
 });
+
+test('refreshed calendar is mobile-first with usable actions and restrained spacing',()=>{
+ assert.match(css,/\/\* Calm, editorial calendar section/);
+ assert.match(css,/\.family-calendar-body\{max-width:none;display:grid/);
+ assert.match(css,/\.family-calendar \.calendar-open\{min-height:48px/);
+ assert.match(css,/@media\(max-width:580px\)\{/);
+ assert.match(css,/\.family-calendar-body\{grid-template-columns:1fr/);
+ assert.match(page,/id="calendar-status"[^>]*role="status"/);
+ assert.match(page,/id="calendar-choices"/);
+});
