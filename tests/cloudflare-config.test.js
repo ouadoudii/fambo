@@ -7,7 +7,7 @@ test('Cloudflare deploy targets existing Worker, not an unintended second Worker
  assert.equal(config.main,'cloudflare/worker.js');
 });
 test('Cloudflare serves versioned static files with the default deploy command',()=>{
- assert.equal(config.build,undefined);
+ assert.equal(config.build?.command,'npm run build');
  assert.equal(config.assets.directory,'./cloudflare/public');
  assert.equal(config.assets.binding,'ASSETS');
  assert.deepEqual(config.assets.run_worker_first,['/api/*']);
