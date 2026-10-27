@@ -11,11 +11,11 @@ test('family calendar is below student schedules and before footer',()=>{
  assert.ok(page.indexOf('class="family-calendar"')<page.indexOf('<footer>'));
  assert.match(page,/aria-labelledby="family-calendar-heading"/);
 });
-test('Notion Calendar link remains secure while private events require OAuth',()=>{
- assert.match(page,/href="https:\/\/calendar\.notion\.so\/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"/);
+test('family calendar uses Google only, keeps private events behind OAuth',()=>{
+ assert.doesNotMatch(page,/calendar\\.notion\\.so|Notion Calendar/i);
  assert.match(page,/id="calendar-connect"/);
  assert.match(page,/id="calendar-events"/);
- assert.match(page,/Deine Kalender bleiben privat/);
+ assert.match(page,/Deine Termine bleiben privat/);
  assert.doesNotMatch(page,/<iframe/i);
  assert.equal(page,publicPage);
 });
@@ -23,4 +23,14 @@ test('mobile calendar navigation remains accessible',()=>{
  assert.match(css,/@media\(max-width:580px\)/);
  assert.match(css,/\.calendar-open:focus-visible/);
  assert.match(css,/min-height:44px/);
+});
+
+test('refreshed calendar is mobile-first with usable actions and restrained spacing',()=>{
+ assert.match(css,/\/\* Calm, editorial calendar section/);
+ assert.match(css,/\.family-calendar-body\{max-width:none;display:grid/);
+ assert.match(css,/\.family-calendar \.calendar-open\{min-height:48px/);
+ assert.match(css,/@media\(max-width:580px\)\{/);
+ assert.match(css,/\.family-calendar-body\{grid-template-columns:1fr/);
+ assert.match(page,/id="calendar-status"[^>]*role="status"/);
+ assert.match(page,/id="calendar-choices"/);
 });
