@@ -21,5 +21,8 @@
     "nodejs_compat"
   ],
   "workers_dev": true,
-  "preview_urls": true
+  "preview_urls": true,
+  "build": {
+    "command": "npm run build"
+  }
 }
