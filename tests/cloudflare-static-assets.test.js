@@ -18,5 +18,5 @@ test('Default npx wrangler deploy can run with no Cloudflare dashboard build com
  assert.equal(cfg.name,'fambo');
  assert.equal(cfg.assets.directory,'./cloudflare/public');
  assert.equal(cfg.main,'cloudflare/worker.js');
- assert.ok(!cfg.build || cfg.build.command===undefined);
+ assert.equal(cfg.build?.command,'npm run build');
 });
