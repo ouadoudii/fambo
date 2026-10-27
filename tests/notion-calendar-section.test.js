@@ -15,7 +15,7 @@ test('family calendar uses Google only, keeps private events behind OAuth',()=>{
  assert.doesNotMatch(page,/calendar\\.notion\\.so|Notion Calendar/i);
  assert.match(page,/id="calendar-connect"/);
  assert.match(page,/id="calendar-events"/);
- assert.match(page,/Deine Kalender bleiben privat/);
+ assert.match(page,/Deine Termine bleiben privat/);
  assert.doesNotMatch(page,/<iframe/i);
  assert.equal(page,publicPage);
 });
