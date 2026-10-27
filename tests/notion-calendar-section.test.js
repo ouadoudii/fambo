@@ -11,8 +11,8 @@ test('family calendar is below student schedules and before footer',()=>{
  assert.ok(page.indexOf('class="family-calendar"')<page.indexOf('<footer>'));
  assert.match(page,/aria-labelledby="family-calendar-heading"/);
 });
-test('Notion Calendar link remains secure while private events require OAuth',()=>{
- assert.match(page,/href="https:\/\/calendar\.notion\.so\/" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"/);
+test('family calendar uses Google only, keeps private events behind OAuth',()=>{
+ assert.doesNotMatch(page,/calendar\\.notion\\.so|Notion Calendar/i);
  assert.match(page,/id="calendar-connect"/);
  assert.match(page,/id="calendar-events"/);
  assert.match(page,/Deine Kalender bleiben privat/);
