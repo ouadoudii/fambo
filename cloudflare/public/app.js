@@ -81,6 +81,7 @@ $('cloud-start').onclick=async()=>{
    request_rejected:'Browserbase hat die Sitzungserstellung abgelehnt.',
    upstream_redirect:'Browserbase-Weiterleitung aus Sicherheitsgründen blockiert.',
    session_setup_failed:'Browser-Sitzung konnte nicht eingerichtet werden.',
+   navigation_failed:'WebUntis konnte im Cloud-Browser nicht geöffnet werden. Die leere Sitzung wurde beendet. Bitte erneut versuchen.',
    cloudflare_daily_limit:'Cloudflare Browser Run hat sein tägliches Browserzeit-Kontingent erreicht. Bitte morgen erneut versuchen.',
    cloudflare_billing:'Cloudflare Browser Run benötigt eine aktive Abrechnung oder verfügbares Guthaben.',
    cloudflare_auth:'Cloudflare Browser Run ist für dieses Projekt nicht autorisiert.',
