@@ -23,7 +23,7 @@ test('rejects weak config, forged ID and untrusted cookie scope',()=>{
 });
 test('Browserbase creation is opt-in server call, recorder and captcha solver disabled',async()=>{
  let request;
- const result=await startCloudBrowser({env,fetcher:async(url,opts)=>{request={url,opts};return new Response(JSON.stringify({id,connectUrl:'wss://private.example/token',signingKey:'secret'}))}});
+ const result=await startCloudBrowser({env,fetcher:async(url,opts)=>{request={url,opts};return new Response(JSON.stringify({id,connectUrl:'wss://private.example/token',signingKey:'secret'}))},navigate:async()=>true});
  assert.deepEqual(result,{sessionId:id});
  assert.equal(request.url,'https://api.browserbase.com/v1/sessions');
  assert.equal(request.opts.headers['X-BB-API-Key'],'fake-test-token');
