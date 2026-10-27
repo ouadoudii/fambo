@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startCloudBrowser} from '../lib/browserbase-sessions.js';
+import {startCloudBrowser,BrowserbaseSessionError} from '../lib/browserbase-sessions.js';
 import {openWebUntisPage} from '../lib/browserbase-navigation.js';
 const env={BROWSERBASE_API_KEY:'test-only',BROWSERBASE_PROJECT_ID:'11111111-2222-4333-8444-555555555555'};
 const session='99999999-2222-4333-8444-555555555555';
@@ -11,9 +11,27 @@ test('new Browserbase session automatically navigates to WebUntis without exposi
  assert.deepEqual(created,{sessionId:session});
  assert.ok(!JSON.stringify(created).includes('private'));
 });
-test('navigation failure does not discard successfully created browser session',async()=>{
- const created=await startCloudBrowser({env,fetcher:async()=>Response.json({id:session,connectUrl:'wss://connect.browserbase.com/'}),navigate:async()=>{throw Error('CDP unavailable')}});
- assert.deepEqual(created,{sessionId:session});
+test('failed initial navigation rejects the session and requests safe release',async()=>{
+ const operations=[];
+ const fetcher=async (url,opts)=>{
+  operations.push({url,method:opts.method,body:opts.body});
+  if(url.endsWith('/sessions'))return Response.json({id:session,connectUrl:'wss://connect.browserbase.com/'});
+  return Response.json({id:session,status:'REQUEST_RELEASE'});
+ };
+ await assert.rejects(
+  startCloudBrowser({env,fetcher,navigate:async()=>false}),
+  error=>error instanceof BrowserbaseSessionError&&error.reason==='navigation_failed'
+ );
+ assert.equal(operations.length,2);
+ assert.ok(operations[1].url.endsWith('/sessions/'+session));
+ assert.match(operations[1].body,/"REQUEST_RELEASE"/);
+});
+test('thrown CDP errors are handled as navigation failure',async()=>{
+ await assert.rejects(startCloudBrowser({
+  env,
+  fetcher:async()=>Response.json({id:session,connectUrl:'wss://connect.browserbase.com/'}),
+  navigate:async()=>{throw Error('CDP unavailable')}
+ }),error=>error instanceof BrowserbaseSessionError&&error.reason==='navigation_failed');
 });
 test('CDP URL host is strictly validated before connecting',async()=>{
  let calls=0;
