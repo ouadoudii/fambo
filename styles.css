@@ -50,3 +50,36 @@ dialog{max-height:90vh;overflow:auto}
 .calendar-choice input{accent-color:#456d55;width:17px;height:17px;flex:none}
 .calendar-choice span{overflow-wrap:anywhere}
 .calendar-choice:focus-within{outline:2px solid #456d55;outline-offset:2px}
+
+
+/* Calm, editorial calendar section: clear action, restrained surfaces, mobile first. */
+.family-calendar{margin:38px 0 22px;padding:clamp(20px,3vw,38px);background:#fff;border:1px solid #e9e8e0;border-radius:24px;box-shadow:0 12px 30px #283d2606}
+.family-calendar-heading{padding-bottom:22px;border-bottom:1px solid #eeeee8}
+.family-calendar-heading .eyebrow{color:#748678}
+.family-calendar-heading h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.045em;line-height:1.12}
+.family-calendar-body{max-width:none;display:grid;grid-template-columns:52px minmax(0,1fr);gap:16px;padding:26px 0 8px;align-items:start}
+.calendar-symbol{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:#eef3eb;color:#486a51;font-size:27px}
+.family-calendar-body strong{display:block;font-size:19px;letter-spacing:-.025em;line-height:1.3}
+.family-calendar-body p{max-width:58ch;color:#66746b;line-height:1.6;margin:8px 0 17px}
+.family-calendar-body .calendar-privacy{margin:12px 0 0;color:#66756b;font-size:13px}
+.family-calendar .calendar-open{min-height:48px;border:0;border-radius:12px;background:#355d45;padding:12px 19px;font-size:14px;box-shadow:none}
+.family-calendar .calendar-open:hover{background:#284b36}
+.family-calendar .manage-link{min-height:44px;margin:0 0 0 8px;padding:10px 12px;border-radius:10px;color:#63766a;text-decoration:none}
+.family-calendar .manage-link:hover{background:#f0f4ef}
+.calendar-choices:not([hidden]){padding:18px 0;margin:12px 0;border-top:1px solid #eeeee8;border-bottom:1px solid #eeeee8}
+.calendar-choice{margin:0;min-height:44px;background:#f8faf7;border-color:#dce5dc}
+.calendar-events{margin-top:12px;gap:0}
+.calendar-event{padding:16px 0;gap:20px;border-top:1px solid #eeeee8}
+.calendar-event time{color:#6a7e6d;font-size:13px;min-width:132px}
+.calendar-event strong{color:#2d4034;font-size:15px}
+@media(max-width:580px){
+ .family-calendar{margin:24px 0 20px;padding:20px 18px;border-radius:20px}
+ .family-calendar-heading{padding-bottom:17px}
+ .family-calendar-body{grid-template-columns:1fr;gap:14px;padding-top:20px}
+ .calendar-symbol{width:44px;height:44px;border-radius:13px;font-size:23px}
+ .family-calendar-body strong{font-size:18px}
+ .family-calendar .calendar-open{width:100%;justify-content:center}
+ .family-calendar .manage-link{display:block;margin:4px auto 0}
+ .calendar-event{gap:5px;padding:14px 0}
+ .calendar-event time{min-width:0}
+}
