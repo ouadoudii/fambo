@@ -62,3 +62,24 @@ test('CDP navigates existing blank page rather than opening another tab',async()
  assert.equal(sent[2].params.url,'https://webuntis.com/');
  assert.equal(sent[2].sessionId,'attached-1');
 });
+
+test('creates a browser tab when CDP reports no pages',async()=>{
+ const commands=[];
+ class Socket {
+  constructor(){this.handlers={};queueMicrotask(()=>this.handlers.open?.())}
+  addEventListener(type,fn){this.handlers[type]=fn}
+  send(raw){
+   const cmd=JSON.parse(raw);commands.push(cmd);
+   const reads=commands.filter(c=>c.method==='Target.getTargets').length;
+   const result=cmd.method==='Target.getTargets'?
+    {targetInfos:reads===1?[]:[{type:'page',targetId:'new-tab',url:'https://webuntis.com/'}]}:
+    cmd.method==='Target.createTarget'?{targetId:'new-tab'}:
+    cmd.method==='Target.attachToTarget'?{sessionId:'tab-session'}:{frameId:'frame'};
+   queueMicrotask(()=>this.handlers.message?.({data:JSON.stringify({id:cmd.id,result})}));
+  }
+  close(){}
+ }
+ assert.equal(await openWebUntisPage('wss://connect.browserbase.com/?case=empty',{WebSocketImpl:Socket,timeoutMs:1000}),true);
+ assert.deepEqual(commands.map(c=>c.method),['Target.getTargets','Target.createTarget','Target.attachToTarget','Page.navigate','Target.getTargets']);
+ assert.equal(commands[3].params.url,'https://webuntis.com/');
+});
