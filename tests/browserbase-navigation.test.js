@@ -43,12 +43,13 @@ test('CDP URL host is strictly validated before connecting',async()=>{
 });
 test('CDP navigates existing blank page rather than opening another tab',async()=>{
  const sent=[];
+ let reads=0;
  class Socket {
   constructor(){this.handlers={};queueMicrotask(()=>this.handlers.open?.())}
   addEventListener(name,fn){this.handlers[name]=fn}
   send(raw){
    const req=JSON.parse(raw);sent.push(req);
-   const result=req.method==='Target.getTargets'?{targetInfos:[{type:'page',url:'about:blank',targetId:'page-1'}]}
+   const result=req.method==='Target.getTargets'?{targetInfos:[{type:'page',url:++reads>1?'https://webuntis.com/':'about:blank',targetId:'page-1'}]}
     :req.method==='Target.attachToTarget'?{sessionId:'attached-1'}:{frameId:'frame-1'};
    queueMicrotask(()=>this.handlers.message?.({data:JSON.stringify({id:req.id,result})}));
   }
@@ -56,7 +57,7 @@ test('CDP navigates existing blank page rather than opening another tab',async()
  }
  const ok=await openWebUntisPage('wss://connect.browserbase.com/?secret=private',{WebSocketImpl:Socket,timeoutMs:1000});
  assert.equal(ok,true);
- assert.deepEqual(sent.map(x=>x.method),['Target.getTargets','Target.attachToTarget','Page.navigate']);
+ assert.deepEqual(sent.map(x=>x.method),['Target.getTargets','Target.attachToTarget','Page.navigate','Target.getTargets']);
  assert.equal(sent[1].params.targetId,'page-1');
  assert.equal(sent[2].params.url,'https://webuntis.com/');
  assert.equal(sent[2].sessionId,'attached-1');
