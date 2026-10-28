@@ -83,3 +83,19 @@ test('creates a browser tab when CDP reports no pages',async()=>{
  assert.deepEqual(commands.map(c=>c.method),['Target.getTargets','Target.createTarget','Target.attachToTarget','Page.navigate','Target.getTargets']);
  assert.equal(commands[3].params.url,'https://webuntis.com/');
 });
+
+test('CDP absence exposes safe diagnostic without leaking endpoint',async()=>{
+ const reasons=[];
+ const result=await openWebUntisPage('wss://connect.browserbase.com/',{WebSocketImpl:null,onFailure:code=>reasons.push(code)});
+ assert.equal(result,false);
+ assert.deepEqual(reasons,['websocket_unavailable']);
+});
+test('Browserbase session failure category survives API wrapper without provider URL',async()=>{
+ const fetcher=async(url)=>url.endsWith('/sessions')
+  ?Response.json({id:session,connectUrl:'wss://connect.browserbase.com/?secret=test'})
+  :Response.json({status:'REQUEST_RELEASE'});
+ await assert.rejects(
+  startCloudBrowser({env,fetcher,navigate:async(_,options)=>{options.onFailure('cdp_connection_failed');return false}}),
+  e=>e instanceof BrowserbaseSessionError&&e.reason==='cdp_connection_failed'&&!e.message.includes('secret')
+ );
+});
