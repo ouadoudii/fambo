@@ -8,8 +8,10 @@ class Production(unittest.TestCase):
    self.assertEqual(response.status,200);html=response.read().decode('utf8')
   self.assertIn('id="connection-form"',html)
   self.assertNotIn('<iframe',html)
-  self.assertIn('https://school.webuntis.com/',html)
-  self.assertIn('id="webuntis-external"',html)
+  self.assertIn('id="ical-file"',html)
+  self.assertIn('Stundenplan-Datei auswählen',html)
+  self.assertNotIn('iCal-Abo verwalten',html)
+  self.assertNotIn('id="child-url"',html)
   self.assertIn('id="schedules"',html)
   self.assertNotIn('Alex',html)
   self.assertNotIn('demo-banner',html)
@@ -18,7 +20,8 @@ class Production(unittest.TestCase):
   with urlopen(BASE+'/app.js',timeout=20) as response:
    self.assertEqual(response.status,200);script=response.read().decode('utf8')
   self.assertIn('localStorage',script)
-  self.assertIn('/api/connect',script)
+  self.assertIn("parseIcal(await file.text())",script)
+  self.assertNotIn('/api/agent/start',script)
   self.assertNotIn("from './auth.js'",script)
  def test_upstash_read_only_connection(self):
   import json
