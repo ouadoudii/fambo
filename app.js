@@ -13,7 +13,7 @@ const offset=(iso,number)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.ge
 const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el};
 function clock(){const d=new Date();$('clock').textContent=new Intl.DateTimeFormat('de-DE',{hour:'2-digit',minute:'2-digit'}).format(d);$('day-label').textContent=new Intl.DateTimeFormat('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d)}
 function save(){localStorage.setItem(KEY,JSON.stringify(children))}
-function openEditor(index){editing=index;const child=children[index];$('child-name').value=child.name;$('child-url').value=child.url;$('form-error').textContent='';$('remove-connection').hidden=!child.url;$('connection-dialog').showModal()}
+function openEditor(index){editing=index;const child=children[index];$('child-name').value=child.name;$('form-error').textContent='';$('remove-connection').hidden=!(child.url||child.lessons?.length);$('connection-dialog').showModal()}
 function showLessons(root,lessons){root.replaceChildren();const days=text('div','','days');const today=new Date().toISOString().slice(0,10);for(let i=0;i<5;i++){const day=offset(week,i),col=text('div','','day'+(day===today?' active':''));col.append(text('div',['Mo','Di','Mi','Do','Fr'][i]+' '+dateShort(day),'day-title'));const rows=lessons.filter(x=>x.date===day);if(!rows.length)col.append(text('p','–','empty'));for(const p of rows){const item=text('div','','lesson'+(p.cancelled?' cancelled':''));item.append(text('b',p.subject),text('small',p.start+(p.end?'–'+p.end:'')+(p.room?' · '+p.room:'')));col.append(item)}days.append(col)}root.append(days)}
 async function load(index,container,child,renderVersion){
  try{
@@ -32,7 +32,7 @@ async function load(index,container,child,renderVersion){
 function render(){const version=++revision;$('week-label').textContent=dateShort(week)+' – '+dateShort(offset(week,6));$('schedules').replaceChildren();children.forEach((child,index)=>{
  const card=text('article','','schedule');const head=text('div','','schedule-head');head.append(text('span',index===0?'☀':'✿','avatar'));const title=text('div','');title.append(text('h2',(child.url||child.lessons?.length)?child.name:'Stundenplan '+(index+1)),text('div',child.url?'WebUntis verbunden':child.lessons?.length?'Stundenplan übernommen':'Noch nicht verbunden','small'));head.append(title);card.append(head);
  const panel=text('div','','card-content');card.append(panel);
- if(!child.url&&!child.lessons?.length){const empty=text('div','','connect-empty');empty.append(text('div','✺','connect-mark'),text('strong','Dein Stundenplan beginnt hier'),text('p','Verbinde WebUntis und sieh deinen Stundenplan direkt auf dieser Familienwand.'));const button=text('button','WebUntis verbinden','primary');button.onclick=()=>openEditor(index);empty.append(button);panel.append(empty)}
+ if(!child.url&&!child.lessons?.length){const empty=text('div','','connect-empty');empty.append(text('div','✺','connect-mark'),text('strong','Dein Stundenplan beginnt hier'),text('p','Importiere deinen Stundenplan als Datei und sieh ihn hier in der Familienübersicht.'));const button=text('button','Stundenplan importieren','primary');button.onclick=()=>openEditor(index);empty.append(button);panel.append(empty)}
  else{if(child.url){panel.append(text('div','Stundenplan wird geladen …','state'));load(index,panel,child,version)}else showLessons(panel,child.lessons);const change=text('button','Verbindung verwalten','manage-link');change.onclick=()=>openEditor(index);card.append(change)}
  $('schedules').append(card);
 })}
@@ -40,7 +40,7 @@ $('previous').onclick=()=>{week=offset(week,-7);render()};
 $('next').onclick=()=>{week=offset(week,7);render()};
 $('today').onclick=()=>{const d=new Date();week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));render()};
 $('close-dialog').onclick=()=>$('connection-dialog').close();
-$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');if(!validIcalUrl(url))parseUntisUrl(url);children[editing]={name,url,lessons:[]};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
+$('connection-form').onsubmit=event=>event.preventDefault();
 $('remove-connection').onclick=()=>{children[editing]=defaultSlots()[editing];save();$('connection-dialog').close();render()};
 
 $('ical-file').onchange=async()=>{
