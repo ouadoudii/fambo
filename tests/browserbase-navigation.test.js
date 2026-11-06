@@ -99,3 +99,43 @@ test('Browserbase session failure category survives API wrapper without provider
   e=>e instanceof BrowserbaseSessionError&&e.reason==='cdp_connection_failed'&&!e.message.includes('secret')
  );
 });
+
+test('uses official debug wsUrl when session creation omits connectUrl',async()=>{
+ const calls=[];
+ let received;
+ const fetcher=async(url,opts)=>{
+  calls.push({url,opts});
+  if(url.endsWith('/sessions'))return Response.json({id:session});
+  if(url.endsWith('/debug'))return Response.json({wsUrl:'wss://connect.browserbase.com/debug/session?sig=private'});
+  throw Error('Unexpected Browserbase request');
+ };
+ const created=await startCloudBrowser({env,fetcher,navigate:async url=>{received=url;return true}});
+ assert.deepEqual(created,{sessionId:session});
+ assert.equal(calls.length,2);
+ assert.equal(calls[1].opts.method,'GET');
+ assert.equal(received,'wss://connect.browserbase.com/debug/session?sig=private');
+ assert.ok(!JSON.stringify(created).includes('private'));
+});
+test('rejects an untrusted creation endpoint and uses safe debug endpoint instead',async()=>{
+ let received='';
+ const fetcher=async url=>url.endsWith('/sessions')
+  ?Response.json({id:session,connectUrl:'wss://connect.browserbase.com.evil.test/secret'})
+  :Response.json({wsUrl:'wss://connect.browserbase.com/debug/safe'});
+ await startCloudBrowser({env,fetcher,navigate:async url=>{received=url;return true}});
+ assert.equal(received,'wss://connect.browserbase.com/debug/safe');
+});
+test('invalid debug websocket never reaches an external host',async()=>{
+ let navigated;
+ let release=false;
+ const fetcher=async(url)=>{
+  if(url.endsWith('/sessions'))return Response.json({id:session});
+  if(url.endsWith('/debug'))return Response.json({wsUrl:'wss://evil.test/secret'});
+  release=true;
+  return Response.json({status:'REQUEST_RELEASE'});
+ };
+ await assert.rejects(startCloudBrowser({
+  env,fetcher,navigate:async(url,{onFailure})=>{navigated=url;onFailure('invalid_endpoint');return false}
+ }),error=>error instanceof BrowserbaseSessionError&&error.reason==='invalid_endpoint');
+ assert.equal(navigated,'wss://evil.test/secret');
+ assert.equal(release,true);
+});
