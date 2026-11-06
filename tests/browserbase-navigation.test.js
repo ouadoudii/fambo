@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startCloudBrowser,BrowserbaseSessionError} from '../lib/browserbase-sessions.js';
+import {startCloudBrowser,BrowserbaseSessionError,inspectBrowserbaseLessons} from '../lib/browserbase-sessions.js';
 import {openWebUntisPage} from '../lib/browserbase-navigation.js';
 const env={BROWSERBASE_API_KEY:'test-only',BROWSERBASE_PROJECT_ID:'11111111-2222-4333-8444-555555555555'};
 const session='99999999-2222-4333-8444-555555555555';
@@ -138,4 +138,54 @@ test('invalid debug websocket never reaches an external host',async()=>{
  }),error=>error instanceof BrowserbaseSessionError&&error.reason==='invalid_endpoint');
  assert.equal(navigated,'wss://evil.test/secret');
  assert.equal(release,true);
+});
+
+test('Browserbase lesson import reads only WebUntis and returns normalized fields',async()=>{
+ const commands=[];
+ class Socket{
+  constructor(){this.handlers={};queueMicrotask(()=>this.handlers.open?.())}
+  addEventListener(type,fn){this.handlers[type]=fn}
+  send(raw){
+   const cmd=JSON.parse(raw);commands.push(cmd);
+   const result=cmd.method==='Target.getTargets'?{targetInfos:[{type:'page',targetId:'tab1',url:'https://test.webuntis.com/timetable'}]}
+    :cmd.method==='Target.attachToTarget'?{sessionId:'attached'}:
+     {result:{value:{ok:true,lessons:[{date:'2026-11-06',start:'08:00',subject:'Mathe',room:'17',secret:'discard'}]}}};
+   queueMicrotask(()=>this.handlers.message?.({data:JSON.stringify({id:cmd.id,result})}));
+  }
+  close(){}
+ }
+ const result=await inspectBrowserbaseLessons(session,{
+  env,WebSocketImpl:Socket,
+  fetcher:async()=>Response.json({wsUrl:'wss://connect.browserbase.com/?safe=test'})
+ });
+ assert.equal(result.status,'ready');
+ assert.deepEqual(result.lessons,[{id:'0',date:'2026-11-06',start:'08:00',end:'',subject:'Mathe',room:'17',cancelled:false}]);
+ assert.deepEqual(commands.map(c=>c.method),['Target.getTargets','Target.attachToTarget','Runtime.evaluate']);
+ assert.equal(commands[2].sessionId,'attached');
+ assert.ok(!JSON.stringify(result).includes('secret'));
+});
+test('Browserbase import never evaluates JavaScript on a non-WebUntis page',async()=>{
+ const commands=[];
+ class Socket{
+  constructor(){this.handlers={};queueMicrotask(()=>this.handlers.open?.())}
+  addEventListener(name,fn){this.handlers[name]=fn}
+  send(raw){
+   const cmd=JSON.parse(raw);commands.push(cmd);
+   queueMicrotask(()=>this.handlers.message?.({data:JSON.stringify({id:cmd.id,result:{targetInfos:[{type:'page',targetId:'bad',url:'https://webuntis.com.attacker.test/'}]}})}));
+  }
+  close(){}
+ }
+ const result=await inspectBrowserbaseLessons(session,{
+  env,WebSocketImpl:Socket,fetcher:async()=>Response.json({wsUrl:'wss://connect.browserbase.com/'})
+ });
+ assert.deepEqual(result,{status:'wrong_site',lessons:[]});
+ assert.deepEqual(commands.map(c=>c.method),['Target.getTargets']);
+});
+test('Browserbase import rejects arbitrary websocket endpoint before connecting',async()=>{
+ let connected=false;
+ class Socket{constructor(){connected=true}}
+ await assert.rejects(inspectBrowserbaseLessons(session,{
+  env,WebSocketImpl:Socket,fetcher:async()=>Response.json({wsUrl:'wss://connect.browserbase.com.evil.test/'})
+ }),/nicht zulässig/);
+ assert.equal(connected,false);
 });
