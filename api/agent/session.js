@@ -23,6 +23,6 @@ export default async function handler(req,res){
    return res.status(200).json({closed:true});
   }
   const viewer=await (env.BROWSER?getNativeViewer(session.sessionId,{env}):getCloudViewer(session.sessionId,{env}));
-  return res.status(200).json({viewer,expiresAt:session.expiresAt});
+  return res.status(200).json({viewer,expiresAt:session.expiresAt,importAvailable:Boolean(env.BROWSER)});
  }catch{return res.status(502).json({error:'Browser-Sitzung momentan nicht erreichbar.'})}
 }
