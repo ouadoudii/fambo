@@ -10,5 +10,6 @@ test('legacy browser launch quota stays secure while the new iCal flow never inv
  assert.match(budget,/fambo:bb/);
  assert.doesNotMatch(app,/\/api\/agent\/start/);
  assert.doesNotMatch(html,/cloud-start|cloud-import/);
- assert.match(html,/iCal verbinden/);
+ assert.match(html,/ICS-Datei|Stundenplan-Datei/);
+ assert.doesNotMatch(html,/Privater WebUntis-iCal-Link|iCal-Abo verwalten/);
 });

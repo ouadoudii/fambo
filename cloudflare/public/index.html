@@ -21,16 +21,13 @@
 </main>
 <dialog id="connection-dialog" aria-labelledby="dialog-title">
 <form id="connection-form">
-<div class="dialog-head"><h2 id="dialog-title">WebUntis verbinden</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
-<p class="hint">Verbinde deinen privaten WebUntis-Stundenplan über iCal – ohne Cloud-Browser, ohne Passwort in Fambo und ohne tägliches Startlimit.</p>
-<p class="hint">In WebUntis: Mein Stundenplan → drei Punkte → iCal-Abo verwalten → Standard → Link erstellen. Die Funktion muss von deiner Schule freigeschaltet sein.</p>
+<div class="dialog-head"><h2 id="dialog-title">Stundenplan importieren</h2><button id="close-dialog" type="button" aria-label="Schließen" class="icon-button">×</button></div>
+<p class="hint">Importiere einen vorhandenen Stundenplan als ICS-Datei. Die Termine bleiben ausschließlich in diesem Browser.</p>
 <label>Anzeige-Name<input id="child-name" name="name" maxlength="30" required placeholder="z. B. Mein Kind" autocomplete="off"></label>
-<label>Privater WebUntis-iCal-Link<input id="child-url" name="url" type="url" placeholder="https://…webuntis.com/…" autocomplete="off"></label>
-<p class="hint">Der Link ermöglicht Zugriff auf deinen Stundenplan. Er wird nur auf diesem Gerät gespeichert und zum Abruf verschlüsselt über HTTPS an WebUntis gesendet. Teile ihn nicht öffentlich.</p>
-<p class="hint">Kein iCal-Abo verfügbar? Du kannst auch eine exportierte .ics-Datei importieren. Das ist kostenlos, aktualisiert sich aber nicht automatisch.</p>
-<label>ICS-Datei einmalig importieren<input id="ical-file" type="file" accept=".ics,text/calendar" aria-label="ICS-Stundenplandatei auswählen"></label>
+<label>Stundenplan-Datei auswählen<input id="ical-file" type="file" accept=".ics,text/calendar" aria-label="Stundenplan als ICS-Datei importieren"></label>
+<p class="hint">Eine importierte Datei aktualisiert sich nicht automatisch. Du kannst später eine neue Datei auswählen.</p>
 <p id="form-error" class="error" role="alert"></p>
-<button class="primary" type="submit">iCal verbinden</button>
+
 <button id="remove-connection" type="button" class="disconnect" hidden>Verbindung auf diesem Gerät entfernen</button>
 </form>
 </dialog>
