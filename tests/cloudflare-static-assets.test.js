@@ -4,12 +4,13 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
 const root=new URL('../',import.meta.url);
 const expected=['app.js','calendar.js','index.html','lib.js','styles.css'];
+const nested=['lib/ical.js'];
 test('Cloudflare default deployment assets are exactly the five intended public files',()=>{
  const files=readdirSync(new URL('../cloudflare/public/',import.meta.url)).sort();
- assert.deepEqual(files,expected);
+ assert.deepEqual(files,expected.concat('lib').sort());
 });
 test('Cloudflare static files never lag behind application sources',()=>{
- for(const name of expected){
+ for(const name of expected.concat(nested)){
   assert.deepEqual(readFileSync(new URL('../cloudflare/public/'+name,import.meta.url)),readFileSync(new URL('../'+name,import.meta.url)),name+' is outdated');
  }
 });
