@@ -1,8 +1,9 @@
 import {mondayISO,parseUntisUrl} from './lib.js';
+import {validIcalUrl,parseIcal} from './lib/ical.js';
 const KEY='fambo.device.links.v1';
 const $=id=>document.getElementById(id);
 const defaultSlots=()=>[{name:'Kind 1',url:'',lessons:[]},{name:'Kind 2',url:'',lessons:[]}];
-const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url)parseUntisUrl(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url,lessons:Array.isArray(x.lessons)?x.lessons.slice(0,200):[]}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
+const restore=()=>{try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(data)||data.length!==2) return defaultSlots();return data.map((x,i)=>{try{if(typeof x.url!=='string'||typeof x.name!=='string'||x.name.length>30)throw Error('invalid');if(x.url&&!validIcalUrl(x.url))parseUntisUrl(x.url);return {name:x.name.trim()||'Kind '+(i+1),url:x.url,lessons:Array.isArray(x.lessons)?x.lessons.slice(0,200):[]}}catch{return defaultSlots()[i]}})}catch{return defaultSlots()}};
 let children=restore();
 let editing=0,revision=0;
 const current=new Date();
@@ -16,7 +17,7 @@ function openEditor(index){editing=index;const child=children[index];$('child-na
 function showLessons(root,lessons){root.replaceChildren();const days=text('div','','days');const today=new Date().toISOString().slice(0,10);for(let i=0;i<5;i++){const day=offset(week,i),col=text('div','','day'+(day===today?' active':''));col.append(text('div',['Mo','Di','Mi','Do','Fr'][i]+' '+dateShort(day),'day-title'));const rows=lessons.filter(x=>x.date===day);if(!rows.length)col.append(text('p','–','empty'));for(const p of rows){const item=text('div','','lesson'+(p.cancelled?' cancelled':''));item.append(text('b',p.subject),text('small',p.start+(p.end?'–'+p.end:'')+(p.room?' · '+p.room:'')));col.append(item)}days.append(col)}root.append(days)}
 async function load(index,container,child,renderVersion){
  try{
-  const response=await fetch('/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:child.url,date:week}),cache:'no-store'});
+  const response=await fetch(validIcalUrl(child.url)?'/api/ical':'/api/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:child.url,date:week}),cache:'no-store'});
   const body=await response.json();
   if(renderVersion!==revision)return;
   if(!response.ok)throw Error(body.error||'Der Stundenplan konnte nicht geladen werden.');
@@ -39,109 +40,18 @@ $('previous').onclick=()=>{week=offset(week,-7);render()};
 $('next').onclick=()=>{week=offset(week,7);render()};
 $('today').onclick=()=>{const d=new Date();week=mondayISO([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));render()};
 $('close-dialog').onclick=()=>$('connection-dialog').close();
-$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');parseUntisUrl(url);children[editing]={name,url,lessons:[]};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
+$('connection-form').onsubmit=event=>{event.preventDefault();const name=$('child-name').value.trim(),url=$('child-url').value.trim();try{if(!name)throw Error('Bitte einen Namen eingeben.');if(!validIcalUrl(url))parseUntisUrl(url);children[editing]={name,url,lessons:[]};save();$('connection-dialog').close();render()}catch(error){$('form-error').textContent=error.message}};
 $('remove-connection').onclick=()=>{children[editing]=defaultSlots()[editing];save();$('connection-dialog').close();render()};
 
-let cloudUrl='';
-async function cloudRequest(path,options){
- const response=await fetch(path,{credentials:'same-origin',cache:'no-store',...options});
- const body=await response.json().catch(()=>({}));
- if(!response.ok){const err=Error(body.error||'Verbindung derzeit nicht verfügbar.');err.reason=body.reason;err.httpStatus=response.status;throw err;}
- return body;
-}
-const cloudMessage=value=>{$('cloud-status').textContent=value};
-async function refreshCloud(){
- $('cloud-start').disabled=true;
+$('ical-file').onchange=async()=>{
+ const file=$('ical-file').files?.[0];if(!file)return;
  try{
-  const status=await cloudRequest('/api/agent/status');
-  $('cloud-start').disabled=!status.available;
-  cloudMessage(status.available?'Bereit für eine geschützte Browser-Sitzung.':'Cloud-Browser momentan noch nicht verfügbar.');
- }catch{cloudMessage('Cloud-Browser momentan noch nicht verfügbar.')}
-}
-$('cloud-start').onclick=async()=>{
- $('cloud-start').disabled=true;
- cloudMessage('Geschützter Browser wird gestartet …');
- try{
-  await cloudRequest('/api/agent/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-  const session=await cloudRequest('/api/agent/session');
-  const url=new URL(session.viewer);
-  if(url.protocol!=='https:'||!(url.hostname==='live.browser.run'||url.hostname==='browserbase.com'||url.hostname.endsWith('.browserbase.com')))throw Error('Ungültige Browser-Adresse');
-  cloudUrl=url.href;
-  $('cloud-viewer').href=cloudUrl;
-  $('cloud-viewer').hidden=false;
-  $('cloud-stop').hidden=false;
-  $('cloud-import').hidden=!session.importAvailable;
-  cloudMessage('Browser bereit. Öffne ihn, wähle deine Schule und melde dich direkt bei WebUntis an.');
- }catch(err){
-  const hints={
-   authentication:'Browserbase-Anmeldung abgelehnt. API-Key prüfen.',
-   billing:'Browserbase-Guthaben oder Abrechnung prüfen.',
-   quota:'Browserbase-Sitzungslimit erreicht.',
-   provider_unavailable:'Browserbase ist derzeit nicht erreichbar.',
-   request_rejected:'Browserbase hat die Sitzungserstellung abgelehnt.',
-   upstream_redirect:'Browserbase-Weiterleitung aus Sicherheitsgründen blockiert.',
-   session_setup_failed:'Browser-Sitzung konnte nicht eingerichtet werden.',
-   navigation_failed:'WebUntis konnte im Cloud-Browser nicht geöffnet werden. Die leere Sitzung wurde beendet. Bitte erneut versuchen.',
-   invalid_endpoint:'Browserbase hat eine ungültige Verbindungsadresse geliefert.',
-   websocket_unavailable:'Der Server unterstützt die Browser-Verbindung nicht.',
-   cdp_connection_failed:'Die Verbindung zum Cloud-Browser konnte nicht aufgebaut werden.',
-   cdp_connection_closed:'Der Cloud-Browser hat die Verbindung vorzeitig beendet.',
-   navigation_timeout:'WebUntis hat im Cloud-Browser nicht rechtzeitig geöffnet.',
-   navigation_unconfirmed:'Die WebUntis-Seite wurde im Cloud-Browser nicht bestätigt.',
-   navigation_rejected:'Der Cloud-Browser hat die Navigation zu WebUntis abgelehnt.',
-   cdp_attach_failed:'Die Browser-Seite konnte nicht verbunden werden.',
-   no_browser_tab:'Der Cloud-Browser konnte keinen Tab erstellen.',
-   cdp_command_failed:'Der Cloud-Browser hat den Navigationsbefehl nicht ausgeführt.',
-   cloudflare_daily_limit:'Cloudflare Browser Run hat sein tägliches Browserzeit-Kontingent erreicht. Bitte morgen erneut versuchen.',
-   cloudflare_billing:'Cloudflare Browser Run benötigt eine aktive Abrechnung oder verfügbares Guthaben.',
-   cloudflare_auth:'Cloudflare Browser Run ist für dieses Projekt nicht autorisiert.',
-   cloudflare_binding:'Die Cloudflare-Browser-Anbindung ist nicht eingerichtet.',
-   cloudflare_unavailable:'Cloudflare Browser Run ist derzeit nicht erreichbar.',
-   cloudflare_session_limit:'Cloudflare erlaubt derzeit keine weitere parallele Browser-Sitzung.',
-   cloudflare_session_invalid:'Cloudflare hat keine gültige Browser-Sitzung zurückgegeben. Browser-Dienst prüfen.',
-   budget_busy:'Eine Sitzung ist noch reserviert. Bitte nach Ablauf der 15-Minuten-Sperre erneut versuchen.',
-   daily_limit:'Das Tageslimit für Cloud-Browser wurde erreicht.',
-   device_limit:'Deine 3 Cloud-Browser-Startversuche für heute sind aufgebraucht. Auch fehlgeschlagene Starts zählen. Ab 00:00 Uhr UTC des nächsten Tages kannst du es erneut versuchen.',
-   budget_unavailable:'Die sichere Sitzungsbegrenzung (Redis) ist derzeit nicht erreichbar.'
-  };
-  const reason=Object.hasOwn(hints,err.reason)?hints[err.reason]:(err.message||'Browser konnte nicht gestartet werden.');
-  $('cloud-viewer').hidden=true;
-  $('cloud-stop').hidden=true;
-  $('cloud-import').hidden=true;
-  cloudUrl='';
-  await refreshCloud();
-  cloudMessage(reason);
- }
+  if(file.size>1024*1024)throw Error('Die Datei ist zu groß (maximal 1 MB).');
+  const lessons=parseIcal(await file.text());
+  if(!lessons.length)throw Error('In der Datei wurden keine Unterrichtstermine gefunden.');
+  children[editing]={name:$('child-name').value.trim()||'Stundenplan',url:'',lessons:lessons.slice(0,200)};
+  save();$('connection-dialog').close();render();
+ }catch(error){$('form-error').textContent=error.message}
+ finally{$('ical-file').value=''}
 };
-$('cloud-stop').onclick=async()=>{
- $('cloud-stop').disabled=true;
- try{
-  await cloudRequest('/api/agent/session',{method:'DELETE',headers:{'Content-Type':'application/json'}});
-  cloudMessage('Browser-Sitzung beendet.');
- }catch(err){cloudMessage(err.message||'Sitzung konnte nicht beendet werden.')}
- finally{
-  cloudUrl='';
-  $('cloud-viewer').href='#';
-  $('cloud-viewer').hidden=true;
-  $('cloud-stop').hidden=true;
-  $('cloud-import').hidden=true;
-  $('cloud-stop').disabled=false;
-  await refreshCloud();
- }
-};
-$('cloud-import').onclick=async()=>{
- const button=$('cloud-import');
- button.disabled=true;
- cloudMessage('Stundenplan wird aus der angemeldeten WebUntis-Seite gelesen …');
- try{
-  const result=await cloudRequest('/api/agent/import',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-  children[editing]={...children[editing],url:'',lessons:result.lessons};
-  save();
-  render();
-  cloudMessage(result.lessons.length+' Unterrichtseinträge übernommen. Die Daten bleiben nur in diesem Browser.');
- }catch(error){cloudMessage(error.message||'Übernahme nicht möglich.')}
- finally{button.disabled=false}
-};
-refreshCloud();
-
 clock();setInterval(clock,30000);setInterval(()=>{if(!$('connection-dialog').open&&children.some(x=>x.url))render()},300000);render();
