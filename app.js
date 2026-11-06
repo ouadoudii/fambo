@@ -101,7 +101,7 @@ $('cloud-start').onclick=async()=>{
    cloudflare_session_invalid:'Cloudflare hat keine gültige Browser-Sitzung zurückgegeben. Browser-Dienst prüfen.',
    budget_busy:'Eine Sitzung ist noch reserviert. Bitte nach Ablauf der 15-Minuten-Sperre erneut versuchen.',
    daily_limit:'Das Tageslimit für Cloud-Browser wurde erreicht.',
-   device_limit:'Das Tageslimit dieses Browsers wurde erreicht.',
+   device_limit:'Deine 3 Cloud-Browser-Startversuche für heute sind aufgebraucht. Auch fehlgeschlagene Starts zählen. Ab 00:00 Uhr UTC (01:00 Uhr MEZ) kannst du es erneut versuchen.',
    budget_unavailable:'Die sichere Sitzungsbegrenzung (Redis) ist derzeit nicht erreichbar.'
   };
   const reason=Object.hasOwn(hints,err.reason)?hints[err.reason]:(err.message||'Browser konnte nicht gestartet werden.');
