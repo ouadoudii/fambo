@@ -2,6 +2,7 @@
  * Exact allowlist: no path-based module loading, no source files in publish directory.
  */
 import connect from '../../api/connect.js';
+import ical from '../../api/ical.js';
 import calendarConfig from '../../api/calendar/config.js';
 import configHandler from '../../api/config.js';
 import timetable from '../../api/timetable.js';
@@ -14,6 +15,7 @@ import agentSession from '../../api/agent/session.js';
 
 const endpoints=new Map([
  ['/api/connect',connect],
+ ['/api/ical',ical],
  ['/api/calendar/config',calendarConfig],
  ['/api/config',configHandler],
  ['/api/timetable',timetable],
