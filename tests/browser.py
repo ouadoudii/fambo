@@ -57,8 +57,9 @@ class ConnectFlows(unittest.TestCase):
     page.locator('#child-name').fill('Mein Kind')
     page.locator('#ical-file').set_input_files({'name':'stundenplan.ics','mimeType':'text/calendar','buffer':ICS.encode()})
     page.get_by_role('heading',name='Mein Kind').wait_for()
+    page.get_by_role('button',name='Nächste Woche').click()
     page.get_by_text('Mathematik').wait_for()
-    page.reload();page.get_by_text('Mathematik').wait_for()
+    page.reload();page.get_by_role('button',name='Nächste Woche').click();page.get_by_text('Mathematik').wait_for()
     self.assertEqual(page.locator('#cloud-start').count(),0)
     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1);ctx.close()
  def test_invalid_private_calendar_host_is_rejected(self):
