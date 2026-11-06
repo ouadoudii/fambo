@@ -70,7 +70,7 @@ $('cloud-start').onclick=async()=>{
   $('cloud-viewer').href=cloudUrl;
   $('cloud-viewer').hidden=false;
   $('cloud-stop').hidden=false;
-  $('cloud-import').hidden=false;
+  $('cloud-import').hidden=!session.importAvailable;
   cloudMessage('Browser bereit. Öffne ihn, wähle deine Schule und melde dich direkt bei WebUntis an.');
  }catch(err){
   const hints={
