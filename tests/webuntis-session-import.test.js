@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {safeWebUntisHost,normalizeSessionLessons,inspectSession} from '../lib/webuntis-session-import.js';
+import {safeWebUntisHost,normalizeSessionLessons,inspectSession,INSPECT} from '../lib/webuntis-session-import.js';
+import vm from 'node:vm';
 const id='11111111-2222-4333-8444-555555555555';
 test('only exact HTTPS WebUntis domains can be read',()=>{
  for(const url of ['https://webuntis.com/','https://anz.webuntis.com/timetable'])assert.equal(safeWebUntisHost(url),true);
@@ -23,4 +24,32 @@ test('WebUntis inspector validates and returns only structured lesson fields',as
  const result=await inspectSession({binding,sessionId:id,sendCommand:async()=>({ok:true,lessons:[{date:'2026-10-23',start:'08:00',subject:'Bio',room:'42',jwt:'never-return'}]})});
  assert.equal(result.status,'ready');
  assert.equal(result.lessons[0].jwt,undefined);
+});
+
+test('inspector reads accessible lesson cards in modern WebUntis grid without exposing page text',()=>{
+ const attrs={'data-date':'2026-11-06','data-start-time':'08:00','data-end-time':'08:45','data-subject-name':'Mathematik','data-room-name':'A17'};
+ const card={
+  classList:{contains:()=>false},
+  textContent:'08:00 08:45 Mathematik A17 Private student profile',
+  getAttribute:name=>attrs[name]||null,
+  querySelector:()=>null,
+  closest:()=>null
+ };
+ const value=vm.runInNewContext(INSPECT,{
+  location:{protocol:'https:',hostname:'schule.webuntis.com'},
+  document:{querySelectorAll:()=>[card]}
+ });
+ assert.equal(value.ok,true);
+ assert.equal(value.lessons.length,1);
+ assert.equal(value.lessons[0].date,'2026-11-06');
+ assert.equal(value.lessons[0].start,'08:00');
+ assert.equal(value.lessons[0].subject,'Mathematik');
+ assert.ok(!JSON.stringify(value).includes('Private student profile'));
+});
+test('inspector rejects non-WebUntis pages without touching the DOM',()=>{
+ const value=vm.runInNewContext(INSPECT,{
+  location:{protocol:'https:',hostname:'webuntis.com.evil.test'},
+  document:{querySelectorAll:()=>{throw Error('DOM was accessed')}}
+ });
+ assert.equal(value.ok,false);
 });
