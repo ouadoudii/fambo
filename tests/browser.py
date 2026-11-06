@@ -20,40 +20,34 @@ class ConnectFlows(unittest.TestCase):
    if path in ('index.html','app.js','styles.css','lib.js','calendar.js','lib/ical.js'):
     return request.fulfill(status=200,content_type={'html':'text/html','js':'text/javascript','css':'text/css'}[path.split('.')[-1]],body=(ROOT/path).read_bytes())
   return request.abort()
- def test_connect_persists_only_in_current_browser_and_disconnects(self):
+ def test_local_import_persists_only_in_current_browser_and_disconnects(self):
   for width,height in [(1440,900),(390,844)]:
    with self.subTest(width=width):
-    ctx=self.browser.new_context(viewport={'width':width,'height':height});page=ctx.new_page();seen=[]
-    def route(r):
-     if r.request.url.endswith('/api/ical'):
-      seen.append(r.request.post_data_json)
-      return r.fulfill(status=200,content_type='application/json',body=json.dumps({'lessons':[{'id':'1','date':'2026-11-09','subject':'Mathematik','start':'08:00','end':'08:45','room':'A12','cancelled':False}]}))
-     return self.fixtures(r)
-    page.route('**/*',route);page.goto('https://family.test/')
-    self.assertEqual(page.get_by_role('button',name='WebUntis verbinden').count(),2)
-    self.assertEqual(page.locator('input[type=password],#cloud-start').count(),0)
-    page.get_by_role('button',name='WebUntis verbinden').first.click()
-    self.assertIn('iCal',page.locator('#connection-dialog').inner_text())
+    ctx=self.browser.new_context(viewport={'width':width,'height':height})
+    page=ctx.new_page();page.route('**/*',self.fixtures);page.goto('https://family.test/')
+    self.assertEqual(page.get_by_role('button',name='Stundenplan importieren').count(),2)
+    page.get_by_role('button',name='Stundenplan importieren').first.click()
+    self.assertEqual(page.locator('#child-url').count(),0)
+    self.assertEqual(page.get_by_role('button',name='iCal verbinden').count(),0)
     page.locator('#child-name').fill('Mein Kind')
-    page.locator('#child-url').fill(LINK)
-    page.get_by_role('button',name='iCal verbinden').click()
+    page.locator('#ical-file').set_input_files({'name':'stundenplan.ics','mimeType':'text/calendar','buffer':ICS.encode()})
     page.get_by_role('heading',name='Mein Kind').wait_for()
-    self.assertEqual(seen[-1]['url'],LINK)
     page.reload();page.get_by_role('heading',name='Mein Kind').wait_for()
-    page.get_by_role('button',name='Nächste Woche').click()
-    self.assertEqual(seen[-1]['url'],LINK)
-    self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
-    other=self.browser.new_context();second=other.new_page();second.route('**/*',route);second.goto('https://family.test/')
-    self.assertEqual(second.get_by_role('heading',name='Mein Kind').count(),0);other.close()
+    other=self.browser.new_context();second=other.new_page()
+    second.route('**/*',self.fixtures);second.goto('https://family.test/')
+    self.assertEqual(second.get_by_role('heading',name='Mein Kind').count(),0)
+    other.close()
     page.get_by_role('button',name='Verbindung verwalten').click()
     page.get_by_role('button',name='Verbindung auf diesem Gerät entfernen').click()
-    page.reload();self.assertEqual(page.get_by_role('heading',name='Mein Kind').count(),0);ctx.close()
+    page.reload();self.assertEqual(page.get_by_role('heading',name='Mein Kind').count(),0)
+    self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1)
+    ctx.close()
  def test_ics_file_import_offline_desktop_and_mobile(self):
   for width,height in [(1440,900),(390,844)]:
    with self.subTest(width=width):
     ctx=self.browser.new_context(viewport={'width':width,'height':height});page=ctx.new_page()
     page.route('**/*',self.fixtures);page.goto('https://family.test/')
-    page.get_by_role('button',name='WebUntis verbinden').first.click()
+    page.get_by_role('button',name='Stundenplan importieren').first.click()
     page.locator('#child-name').fill('Mein Kind')
     page.locator('#ical-file').set_input_files({'name':'stundenplan.ics','mimeType':'text/calendar','buffer':ICS.encode()})
     page.get_by_role('heading',name='Mein Kind').wait_for()
@@ -62,21 +56,21 @@ class ConnectFlows(unittest.TestCase):
     page.reload();page.get_by_role('button',name='Nächste Woche').click();page.get_by_text('Mathematik').wait_for()
     self.assertEqual(page.locator('#cloud-start').count(),0)
     self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'),width+1);ctx.close()
- def test_invalid_private_calendar_host_is_rejected(self):
+ def test_private_subscription_option_is_not_present(self):
   page=self.browser.new_page();page.route('**/*',self.fixtures);page.goto('https://family.test/')
-  page.get_by_role('button',name='WebUntis verbinden').first.click()
-  page.locator('#child-name').fill('Kind')
-  page.locator('#child-url').fill('https://webuntis.com.evil.test/private.ics')
-  page.get_by_role('button',name='iCal verbinden').click()
-  page.get_by_text('Nur sichere WebUntis-Links sind erlaubt.').wait_for()
-  self.assertEqual(page.get_by_role('button',name='WebUntis verbinden').count(),2);page.close()
+  page.get_by_role('button',name='Stundenplan importieren').first.click()
+  self.assertEqual(page.locator('#child-url').count(),0)
+  self.assertEqual(page.get_by_role('button',name='iCal verbinden').count(),0)
+  self.assertEqual(page.locator('#ical-file').count(),1)
+  self.assertNotIn('iCal-Abo verwalten',page.locator('#connection-dialog').inner_text())
+  page.close()
  def test_no_cloud_browser_quota_or_api_calls_on_schedule_import(self):
   page=self.browser.new_page();calls=[]
   def route(r):
    if r.request.url.startswith('https://family.test/api/agent/'):calls.append(r.request.url);return r.abort()
    return self.fixtures(r)
   page.route('**/*',route);page.goto('https://family.test/')
-  page.get_by_role('button',name='WebUntis verbinden').first.click()
+  page.get_by_role('button',name='Stundenplan importieren').first.click()
   self.assertEqual(page.get_by_role('button',name='Geschützten Browser öffnen').count(),0)
   self.assertEqual(page.locator('#ical-file').count(),1)
   self.assertEqual(calls,[]);page.close()
